@@ -474,9 +474,18 @@ input,select{font-family:inherit;}
 .mc-head{display:flex;align-items:center;gap:12px;}
 .mc-emoji{width:52px;height:52px;border-radius:14px;background:var(--peri-dim);border:1px solid #8C93FF44;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;}
 .mc-head-text{flex:1;min-width:0;}
-.mission-card.upcoming .m-tag{margin-top:0;}
-.mission-card.upcoming .m-name{font-size:18px;margin:2px 0 0;line-height:1.2;}
-.mission-card.upcoming .m-msg{margin-top:12px;}
+.mission-card.upcoming .m-tag, .mission-card.current .m-tag{margin-top:0;}
+.mission-card.upcoming .m-name, .mission-card.current .m-name{font-size:18px;margin:2px 0 0;line-height:1.2;}
+.mission-card.upcoming .m-msg, .mission-card.current .m-msg{margin-top:12px;}
+.mission-card.current{text-align:left;padding:16px;background:linear-gradient(160deg,var(--bg-surface-2),var(--mint-dim));border:1px solid #37E2A055;}
+.mission-card.current .mc-emoji{background:var(--mint-dim);border-color:#37E2A044;}
+.mission-card.current .m-tag{color:var(--mint);}
+.mode-switch{display:flex;gap:8px;margin-bottom:12px;}
+.mode-opt{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 8px;border-radius:12px;background:var(--bg-surface-2);border:2px solid transparent;color:var(--text);text-align:center;}
+.mode-opt .mo-ic{font-size:22px;}
+.mode-opt b{font-size:13px;}
+.mode-opt small{font-size:10.5px;color:var(--text-muted);line-height:1.25;}
+.mode-opt.sel{border-color:var(--peri);background:var(--peri-dim);}
 .mc-chip{display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:3px 9px;border-radius:999px;background:var(--amber-dim);color:var(--amber);border:1px solid #FFB64844;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;}
 .mc-route{display:flex;align-items:center;gap:10px;margin-top:14px;}
 .mc-point{flex:1;background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;padding:10px 8px;text-align:center;}
@@ -621,6 +630,26 @@ let PLAN_EDIT_ID = null;       // id da meta planejada que está sendo editada
 // Draft helpers (emoji fixo)
 const draftFromTheme = (t) => (t ? { emoji: t.emoji || MISSION_THEME_DEFAULT.emoji, name: t.name || '', message: t.message || '' } : { emoji: MISSION_THEME_DEFAULT.emoji, name: MISSION_THEME_DEFAULT.name, message: MISSION_THEME_DEFAULT.msg });
 
+let PLAN_MODE_DRAFT = null;   // 'vacation' | 'normal' ao planejar a próxima meta
+let EDIT_MODE_DRAFT = null;   // 'vacation' | 'normal' ao editar o aluno
+const modeOfEntry = (e) => (e && e.mode) ? (e.mode==='normal' ? 'normal' : 'vacation') : (e && e.theme ? 'vacation' : 'normal');
+function renderModeSwitch(key, mode){
+  const opt = (m, ico, title, sub) => `<button type="button" class="mode-opt ${mode===m?'sel':''}" data-mode-switch="${key}:${m}" aria-pressed="${mode===m}"><span class="mo-ic">${ico}</span><b>${title}</b><small>${sub}</small></button>`;
+  return `<div class="mode-switch" role="group" aria-label="Modo da meta">
+    ${opt('vacation','🌴','Modo férias','Missão com tema para o aluno')}
+    ${opt('normal','📘','Modo normal','Meta comum, sem tema')}
+  </div>`;
+}
+function bindModeSwitch(key, setMode, boxId){
+  const btns = document.querySelectorAll(`[data-mode-switch^="${key}:"]`);
+  const box = document.getElementById(boxId);
+  btns.forEach(b=> b.onclick = ()=>{
+    const m = b.getAttribute('data-mode-switch').split(':')[1];
+    setMode(m);
+    btns.forEach(x=>{ const on = x===b; x.classList.toggle('sel', on); x.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+    if(box) box.style.display = (m==='vacation') ? '' : 'none';
+  });
+}
 function renderThemeEditor(key, d){
   // Editor simplificado: mostra emoji fixo e apenas campos de nome/mensagem para o orientador.
   return `
@@ -1367,6 +1396,27 @@ function renderJourney(student){
       </div>` : ''}
 
     ${(() => {
+      const m = student.missionTheme;
+      if(!m) return '';
+      const today = todayISO();
+      const startsIn = student.startDate && student.startDate > today ? daysBetween(today, student.startDate) : 0;
+      const left = student.targetEnd ? daysBetween(today, student.targetEnd) : null;
+      const cstatus = startsIn>0 ? `Começa em ${startsIn} ${startsIn===1?'dia':'dias'}` : (left===null ? '' : (left>=0 ? `Faltam ${left} ${left===1?'dia':'dias'}` : 'Prazo finalizado'));
+      return `
+      <div class="mission-card current" role="region" aria-label="Missão de férias em andamento">
+        <div class="mc-head">
+          <span class="mc-emoji" aria-hidden="true">${esc(MISSION_THEME_DEFAULT.emoji)}</span>
+          <div class="mc-head-text">
+            <div class="m-tag">Modo férias · em andamento</div>
+            <div class="m-name">${esc(m.name || 'Missão de Férias')}</div>
+            ${cstatus ? `<span class="mc-chip">⏳ ${cstatus}</span>` : ''}
+          </div>
+        </div>
+        ${m.message ? `<div class="m-msg">${esc(m.message)}</div>` : ''}
+      </div>`;
+    })()}
+
+    ${(() => {
       const nx = (student.metaHistory||[]).find(e=>e.status==='planned');
       if(!nx) return '';
       const today = todayISO();
@@ -1379,8 +1429,9 @@ function renderJourney(student){
       // proposal edit mode
       const editing = (STUDENT_PROPOSAL_MODE === nx.id);
 
-      const mName = (nx.theme && nx.theme.name) || 'Missão de Férias';
-      const mMsg = (nx.theme && nx.theme.message) || nx.message || MISSION_THEME_DEFAULT.msg;
+      const isVac = modeOfEntry(nx) === 'vacation';
+      const mName = isVac ? ((nx.theme && nx.theme.name) || 'Missão de Férias') : 'Nova meta';
+      const mMsg = isVac ? ((nx.theme && nx.theme.message) || nx.message || MISSION_THEME_DEFAULT.msg) : 'Seu orientador planejou o próximo passo da sua evolução. Veja o caminho e responda abaixo.';
       const route = nx.startStage
         ? `<div class="mc-route">
              <div class="mc-point"><span class="mc-lbl">Ponto de partida</span><span class="mc-val">${esc(nx.startStage)}${esc(nx.startSheet)}</span></div>
@@ -1394,13 +1445,13 @@ function renderJourney(student){
         </div>`;
       const respBlock = resp === null ? (editing ? '' : `
           <div class="mc-actions">
-            <button class="btn btn-primary btn-block" data-accept-plan="${nx.id}">✅ Aceitar missão</button>
+            <button class="btn btn-primary btn-block" data-accept-plan="${nx.id}">✅ Aceitar ${isVac ? 'missão' : 'meta'}</button>
             <button class="btn btn-ghost btn-block" data-propose-plan="${nx.id}">✏️ Propor alternativa</button>
           </div>`)
         : (resp === 'accepted' ? `
           <div class="mc-status ok">
             <span class="mc-sic">✅</span>
-            <div><b>Você aceitou esta missão</b><small>Respondido em ${fmtDateTime(nx.studentRespondedAt)}</small></div>
+            <div><b>Você aceitou ${isVac ? 'esta missão' : 'esta meta'}</b><small>Respondido em ${fmtDateTime(nx.studentRespondedAt)}</small></div>
           </div>`
         : `
           <div class="mc-status warn">
@@ -1441,11 +1492,11 @@ function renderJourney(student){
           </div>` : '';
 
       return `
-      <div class="mission-card upcoming" role="region" aria-label="Próxima missão">
+      <div class="mission-card upcoming" role="region" aria-label="${isVac ? 'Próxima missão' : 'Próxima meta'}">
         <div class="mc-head">
-          <span class="mc-emoji" aria-hidden="true">${esc(MISSION_THEME_DEFAULT.emoji)}</span>
+          <span class="mc-emoji" aria-hidden="true">${isVac ? esc(MISSION_THEME_DEFAULT.emoji) : '🎯'}</span>
           <div class="mc-head-text">
-            <div class="m-tag">Próxima missão</div>
+            <div class="m-tag">${isVac ? 'Próxima missão' : 'Próxima meta'}</div>
             <div class="m-name">${esc(mName)}</div>
             ${status ? `<span class="mc-chip">⏳ ${status}</span>` : ''}
           </div>
@@ -1698,7 +1749,7 @@ function renderMetaHistoryRows(student, forAdmin){
     const from = e.startStage ? `${esc(e.startStage)}${esc(e.startSheet)} → ` : '';
     const studentRespHtml = (()=> {
       if(!e.studentResponse) return `<div class="pc-resp wait">⏳ Aguardando resposta do aluno</div>`;
-      if(e.studentResponse==='accepted') return `<div class="pc-resp ok"><b>✅ Aluno aceitou a missão</b><small>${fmtDateTime(e.studentRespondedAt)}</small></div>`;
+      if(e.studentResponse==='accepted') return `<div class="pc-resp ok"><b>✅ Aluno aceitou ${modeOfEntry(e)==='vacation' ? 'a missão' : 'a meta'}</b><small>${fmtDateTime(e.studentRespondedAt)}</small></div>`;
       if(e.studentResponse==='proposed' && e.studentProposal){
         const pr = e.studentProposal;
         return `<div class="pc-resp warn"><b>✏️ Aluno propôs: ${esc(pr.proposedStage)}${esc(pr.proposedSheet)}</b><small>${fmtDateTime(pr.submittedAt)}</small>${pr.note ? `<div class="pc-note">“${esc(pr.note)}”</div>` : ''}</div>`;
@@ -1708,7 +1759,7 @@ function renderMetaHistoryRows(student, forAdmin){
     rows.push(`
       <div class="plan-card">
         <div class="plan-top">
-          <span class="meta-badge planned">${th ? esc(th.emoji)+' ' : ''}Planejada</span>
+          <span class="meta-badge planned">${modeOfEntry(e)==='vacation' ? '🌴 Modo férias' : '📘 Modo normal'} · Planejada</span>
           ${forAdmin ? `<div class="plan-actions"><button class="btn btn-ghost btn-sm" data-edit-planned="${e.id}">Editar</button><button class="btn btn-ghost btn-sm" data-remove-planned="${e.id}">Remover</button></div>` : ''}
         </div>
         <div class="plan-route">${e.startStage ? `<span>${esc(e.startStage)}${esc(e.startSheet)}</span><span class="arr">➜</span>` : ''}<span class="goal">${esc(e.targetStage)}${esc(e.targetSheet)}</span></div>
@@ -1760,6 +1811,7 @@ function renderMetaHistoryRows(student, forAdmin){
 function renderTrimesterSectionAdmin(student){
   const editing = PLAN_EDIT_ID ? (student.metaHistory||[]).find(e=>e.id===PLAN_EDIT_ID && e.status==='planned') : null;
   if(PLAN_META_MODE && !PLAN_THEME_DRAFT) PLAN_THEME_DRAFT = draftFromTheme(editing && editing.theme);
+  if(PLAN_META_MODE && !PLAN_MODE_DRAFT) PLAN_MODE_DRAFT = editing ? modeOfEntry(editing) : 'vacation';
   const pv = editing || {};
   const defStartDate = student.targetEnd && student.targetEnd>=todayISO() ? student.targetEnd : todayISO();
   return `
@@ -1769,8 +1821,8 @@ function renderTrimesterSectionAdmin(student){
 
       ${PLAN_META_MODE ? `
         <div class="forgot-editor" style="background:var(--peri-dim);border-color:#8C93FF55;margin-top:10px;">
-          <label style="display:block;font-size:13px;color:var(--text);font-weight:700;margin-bottom:4px;">${editing ? '✏️ Editar a próxima meta' : '🌴 Planejar a próxima meta (férias)'}</label>
-          <p class="faint" style="font-size:11px;margin:0 0 12px;">O aluno verá esta missão como "Próxima missão". A ativação (transformar em meta atual) continua sendo sua decisão ao encerrar o trimestre.</p>
+          <label style="display:block;font-size:13px;color:var(--text);font-weight:700;margin-bottom:4px;">${editing ? '✏️ Editar a próxima meta' : '🎯 Planejar a próxima meta'}</label>
+          <p class="faint" style="font-size:11px;margin:0 0 12px;">O aluno verá esta meta como "Próxima missão" (modo férias) ou "Próxima meta" (modo normal). A ativação (transformar em meta atual) continua sendo sua decisão ao encerrar o trimestre.</p>
 
           <label style="display:block;font-size:12px;color:var(--text-muted);font-weight:600;margin-bottom:6px;">Ponto de partida</label>
           <div class="field-row">
@@ -1793,8 +1845,12 @@ function renderTrimesterSectionAdmin(student){
             <div class="field"><label>Data final</label><input type="date" id="f-plan-date" value="${esc(pv.targetEnd || '')}"></div>
           </div>
 
-          <label style="display:block;font-size:12px;color:var(--text-muted);font-weight:600;margin-bottom:6px;">Tema da aventura</label>
-          ${renderThemeEditor('plan', PLAN_THEME_DRAFT)}
+          <label style="display:block;font-size:12px;color:var(--text-muted);font-weight:600;margin-bottom:6px;">Modo da meta</label>
+          ${renderModeSwitch('plan', PLAN_MODE_DRAFT)}
+          <div id="plan-theme-box" style="${PLAN_MODE_DRAFT==='vacation' ? '' : 'display:none;'}">
+            <label style="display:block;font-size:12px;color:var(--text-muted);font-weight:600;margin-bottom:6px;">Tema da aventura</label>
+            ${renderThemeEditor('plan', PLAN_THEME_DRAFT)}
+          </div>
 
           <div class="error-msg" id="plan-meta-error"></div>
           <div class="field-row">
@@ -2453,6 +2509,7 @@ function renderCalendar(student, readOnly){
 
 function renderStudentEditForm(student){
   if(!EDIT_THEME_DRAFT) EDIT_THEME_DRAFT = draftFromTheme(student.missionTheme);
+  if(!EDIT_MODE_DRAFT) EDIT_MODE_DRAFT = student.missionTheme ? 'vacation' : 'normal';
   return `
     <div class="field"><label>Nome</label><input id="f-edit-name" value="${esc(student.name)}"></div>
     <div class="field"><label>Código individual de acesso</label><input id="f-edit-code" inputmode="numeric" value="${esc(student.code)}"></div>
@@ -2482,11 +2539,11 @@ function renderStudentEditForm(student){
     <div class="field"><label>Data final da meta</label><input type="date" id="f-edit-target-date" value="${student.targetEnd}"></div>
     <p class="faint" style="font-size:11px;margin:-6px 0 16px;">O progresso já feito é mantido ao mudar só a meta — blocos são adicionados ou removidos do final.</p>
 
-    <div class="eyebrow" style="margin:6px 0 8px;">🌴 Missão / aventura do aluno</div>
-    <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:12px;">
-      <input type="checkbox" id="f-edit-mission-on" ${student.missionTheme?'checked':''} style="width:auto;"> Mostrar a missão para o aluno
-    </label>
-    ${renderThemeEditor('edit', EDIT_THEME_DRAFT)}
+    <div class="eyebrow" style="margin:6px 0 8px;">🎯 Modo da meta atual</div>
+    ${renderModeSwitch('edit', EDIT_MODE_DRAFT)}
+    <div id="edit-theme-box" style="${EDIT_MODE_DRAFT==='vacation' ? '' : 'display:none;'}">
+      ${renderThemeEditor('edit', EDIT_THEME_DRAFT)}
+    </div>
 
     <div class="error-msg" id="edit-student-error"></div>
     <div class="field-row">
@@ -2848,7 +2905,7 @@ function attachHandlers(){
   // Admin detail: números personalizados dos blocos
   if($('#btn-edit-labels')) $('#btn-edit-labels').onclick = ()=>{ EDIT_LABELS_MODE=true; render(); };
   if($('#btn-edit-student')) $('#btn-edit-student').onclick = ()=>{ EDIT_STUDENT_MODE=true; render(); };
-  if($('#btn-cancel-target')) $('#btn-cancel-target').onclick = ()=>{ EDIT_STUDENT_MODE=false; EDIT_THEME_DRAFT=null; render(); };
+  if($('#btn-cancel-target')) $('#btn-cancel-target').onclick = ()=>{ EDIT_STUDENT_MODE=false; EDIT_THEME_DRAFT=null; EDIT_MODE_DRAFT=null; render(); };
   if($('#avatar-picker-edit')){
     $$('#avatar-picker-edit .avatar-opt').forEach(btn=> btn.onclick = ()=>{
       $$('#avatar-picker-edit .avatar-opt').forEach(b=>b.classList.remove('sel'));
@@ -2856,8 +2913,8 @@ function attachHandlers(){
     });
   }
   if($('#btn-save-target')) $('#btn-save-target').onclick = saveStudentEdit;
-  if($('#btn-plan-meta')) $('#btn-plan-meta').onclick = ()=>{ PLAN_EDIT_ID=null; PLAN_THEME_DRAFT=null; PLAN_META_MODE=true; render(); };
-  $$('[data-edit-planned]').forEach(btn=> btn.onclick = ()=>{ PLAN_EDIT_ID=btn.getAttribute('data-edit-planned'); PLAN_THEME_DRAFT=null; PLAN_META_MODE=true; render(); });
+  if($('#btn-plan-meta')) $('#btn-plan-meta').onclick = ()=>{ PLAN_EDIT_ID=null; PLAN_THEME_DRAFT=null; PLAN_MODE_DRAFT=null; PLAN_META_MODE=true; render(); };
+  $$('[data-edit-planned]').forEach(btn=> btn.onclick = ()=>{ PLAN_EDIT_ID=btn.getAttribute('data-edit-planned'); PLAN_THEME_DRAFT=null; PLAN_MODE_DRAFT=null; PLAN_META_MODE=true; render(); });
   // justificativa obrigatória: o botão só habilita com pelo menos 5 letras
   $$('[id^="f-prop-note-"]').forEach(ta=>{
     const pid = ta.id.replace('f-prop-note-','');
@@ -2880,9 +2937,11 @@ function attachHandlers(){
     };
     ta.oninput = sync; sync();
   });
+  bindModeSwitch('plan', m=>{ PLAN_MODE_DRAFT = m; }, 'plan-theme-box');
+  bindModeSwitch('edit', m=>{ EDIT_MODE_DRAFT = m; }, 'edit-theme-box');
   bindThemeEditor('plan', ()=>PLAN_THEME_DRAFT);
   bindThemeEditor('edit', ()=>EDIT_THEME_DRAFT);
-  if($('#btn-cancel-plan')) $('#btn-cancel-plan').onclick = ()=>{ PLAN_META_MODE=false; PLAN_THEME_DRAFT=null; PLAN_EDIT_ID=null; render(); };
+  if($('#btn-cancel-plan')) $('#btn-cancel-plan').onclick = ()=>{ PLAN_META_MODE=false; PLAN_THEME_DRAFT=null; PLAN_MODE_DRAFT=null; PLAN_EDIT_ID=null; render(); };
   if($('#btn-save-plan')) $('#btn-save-plan').onclick = savePlannedMeta;
   $$('[data-remove-planned]').forEach(btn=> btn.onclick = ()=> removePlannedMeta(btn.getAttribute('data-remove-planned')));
   if($('#btn-end-trimester')) $('#btn-end-trimester').onclick = ()=>{ END_TRIMESTER_CONFIRM = SELECTED_STUDENT_ID; render(); };
@@ -3177,7 +3236,7 @@ async function handleStudentAccept(entryId){
   if(!res.ok){ showToast('⚠️ Não foi possível enviar sua resposta agora. Tente de novo em instantes.'); return; }
   applyPlanResponse(entry, res.payload);
   STUDENT_PROPOSAL_MODE = null;
-  showToast('Missão aceita! O orientador já pode ver sua resposta.');
+  showToast('Aceite enviado! O orientador já pode ver sua resposta.');
 }
 async function handleStudentProposeSubmit(entryId){
   if(!SESSION || SESSION.role!=='student') return;
@@ -3360,14 +3419,13 @@ async function saveStudentEdit(){
   student.startDate = startDate;
   student.targetStart = startDate;
 
-  const missionOn = document.getElementById('f-edit-mission-on');
-  if(missionOn){
+  if(EDIT_MODE_DRAFT){
     const d = EDIT_THEME_DRAFT || draftFromTheme(student.missionTheme);
-    student.missionTheme = missionOn.checked
+    student.missionTheme = (EDIT_MODE_DRAFT === 'vacation')
       ? { emoji: MISSION_THEME_DEFAULT.emoji, name: (d.name||'').trim() || 'Missão de Férias', message: (d.message||'').trim() }
       : null;
   }
-  EDIT_THEME_DRAFT = null;
+  EDIT_THEME_DRAFT = null; EDIT_MODE_DRAFT = null;
   touch(student);
   await saveData();
   EDIT_STUDENT_MODE = false;
@@ -3394,13 +3452,15 @@ async function savePlannedMeta(){
   }
 
   const d = PLAN_THEME_DRAFT || draftFromTheme(null);
+  const planMode = PLAN_MODE_DRAFT === 'normal' ? 'normal' : 'vacation';
   if(!student.metaHistory) student.metaHistory = [];
   student.metaHistory = student.metaHistory.filter(e=>e.status!=='planned');
   student.metaHistory.push({
     id: uid(), status:'planned',
     startStage, startSheet: Number(startSheetRaw), startDate,
     targetStage: stage, targetSheet: Number(sheetRaw), targetEnd: date,
-    theme: { emoji: MISSION_THEME_DEFAULT.emoji, name: (d.name||'').trim() || 'Missão de Férias', message: (d.message||'').trim() },
+    mode: planMode,
+    theme: planMode==='vacation' ? { emoji: MISSION_THEME_DEFAULT.emoji, name: (d.name||'').trim() || 'Missão de Férias', message: (d.message||'').trim() } : null,
     plannedAt: todayISO(),
     studentResponse: null,
     studentProposal: null,
@@ -3408,8 +3468,8 @@ async function savePlannedMeta(){
   });
   touch(student);
   await saveData();
-  PLAN_META_MODE = false; PLAN_THEME_DRAFT = null; PLAN_EDIT_ID = null;
-  showToast('Próxima meta salva! O aluno já vê como "Próxima missão".');
+  PLAN_META_MODE = false; PLAN_THEME_DRAFT = null; PLAN_MODE_DRAFT = null; PLAN_EDIT_ID = null;
+  showToast(planMode==='vacation' ? 'Próxima meta salva! O aluno já vê como "Próxima missão".' : 'Próxima meta salva! O aluno já vê como "Próxima meta".');
 }
 async function removePlannedMeta(id){
   const student = DATA.students.find(s=>s.id===SELECTED_STUDENT_ID);
@@ -3452,7 +3512,7 @@ async function endTrimester(){
     touch(student);
     await saveData();
     END_TRIMESTER_CONFIRM = null;
-    showToast('Nova meta ativada! O aluno já vê a missão de férias.');
+    showToast(planned.theme ? 'Nova meta ativada! O aluno já vê a missão de férias.' : 'Nova meta ativada!');
   } else {
     student.blocks = [];
     student.totalBlocks = 0;
