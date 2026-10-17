@@ -470,8 +470,53 @@ input,select{font-family:inherit;}
   position:relative;overflow:hidden;border-radius:var(--radius);padding:18px;margin-bottom:14px;text-align:center;
   background:linear-gradient(135deg,var(--peri-dim),var(--mint-dim));border:1px solid #8C93FF55;
 }
-.mission-card.upcoming{background:var(--bg-surface-2);border:1.5px dashed #8C93FF77;}
-.mission-card.upcoming .m-emoji{font-size:36px;}
+.mission-card.upcoming{text-align:left;padding:16px;background:linear-gradient(160deg,var(--bg-surface-2),var(--peri-dim));border:1px solid #8C93FF55;}
+.mc-head{display:flex;align-items:center;gap:12px;}
+.mc-emoji{width:52px;height:52px;border-radius:14px;background:var(--peri-dim);border:1px solid #8C93FF44;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;}
+.mc-head-text{flex:1;min-width:0;}
+.mission-card.upcoming .m-tag{margin-top:0;}
+.mission-card.upcoming .m-name{font-size:18px;margin:2px 0 0;line-height:1.2;}
+.mission-card.upcoming .m-msg{margin-top:12px;}
+.mc-chip{display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:3px 9px;border-radius:999px;background:var(--amber-dim);color:var(--amber);border:1px solid #FFB64844;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.mc-route{display:flex;align-items:center;gap:10px;margin-top:14px;}
+.mc-point{flex:1;background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;padding:10px 8px;text-align:center;}
+.mc-point.goal{background:var(--mint-dim);border-color:#37E2A055;}
+.mc-lbl{display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-family:'JetBrains Mono',monospace;}
+.mc-val{display:block;font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;margin-top:2px;color:var(--text);}
+.mc-arrow{color:var(--peri);font-size:20px;flex-shrink:0;}
+.mc-dates{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;font-size:13.5px;}
+.mc-dates > div:not(.mc-line){text-align:center;}
+.mc-line{flex:1;height:2px;background:repeating-linear-gradient(90deg,#8C93FF77 0 6px,transparent 6px 12px);}
+.mc-actions{display:flex;flex-direction:column;gap:8px;margin-top:16px;}
+.mc-status{display:flex;gap:10px;align-items:flex-start;margin-top:16px;padding:12px;border-radius:12px;font-size:13px;}
+.mc-status.ok{background:var(--mint-dim);border:1px solid #37E2A044;}
+.mc-status.warn{background:var(--amber-dim);border:1px solid #FFB64844;}
+.mc-status .mc-sic{font-size:20px;line-height:1.2;}
+.mc-status b{display:block;color:var(--text);}
+.mc-status small{display:block;margin-top:3px;font-size:12px;color:var(--text-muted);}
+.mc-status small.mc-quote{font-style:italic;margin-top:6px;}
+.mc-editor{margin-top:16px;padding:14px;border-radius:12px;background:var(--bg-surface);border:1px solid var(--border);}
+.mc-editor-title{font-weight:700;font-size:14px;}
+.mc-hint{font-size:12px;color:var(--text-muted);margin:4px 0 12px;line-height:1.4;}
+.mc-req{margin-left:6px;padding:1px 7px;border-radius:6px;font-size:10px;font-weight:700;background:var(--amber-dim);color:var(--amber);border:1px solid #FFB64844;}
+.mc-count{text-align:right;font-size:11px;color:var(--text-faint);margin-top:4px;font-family:'JetBrains Mono',monospace;}
+.mc-foot{font-size:11.5px;color:var(--text-faint);margin:14px 0 0;line-height:1.4;}
+.field textarea{width:100%;background:var(--bg-surface-2);border:1px solid var(--border);color:var(--text);padding:12px 13px;border-radius:10px;font-size:14.5px;outline:none;font-family:inherit;resize:vertical;}
+.field textarea:focus{border-color:#37E2A088;}
+.btn:disabled{opacity:.4;pointer-events:none;}
+.plan-card{padding:14px;border-radius:14px;background:var(--bg-surface-2);border:1px solid #8C93FF44;margin-bottom:10px;}
+.plan-top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.plan-actions{display:flex;gap:6px;}
+.plan-route{display:flex;align-items:center;gap:10px;margin-top:12px;font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;}
+.plan-route .arr{color:var(--peri);font-size:18px;}
+.plan-route .goal{color:var(--mint);}
+.plan-dates{font-size:12px;color:var(--text-muted);margin-top:4px;}
+.pc-resp{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:12.5px;}
+.pc-resp.wait{background:var(--bg-surface-3);border:1px dashed var(--border);color:var(--text-muted);}
+.pc-resp.ok{background:var(--mint-dim);border:1px solid #37E2A044;}
+.pc-resp.warn{background:var(--amber-dim);border:1px solid #FFB64844;}
+.pc-resp small{display:block;margin-top:3px;color:var(--text-muted);font-size:11.5px;}
+.pc-resp .pc-note{margin-top:6px;font-style:italic;color:var(--text);}
 .emoji-grid{display:flex;flex-wrap:wrap;gap:6px;}
 .emoji-opt{width:40px;height:40px;border-radius:10px;background:var(--bg-surface-2);border:2px solid transparent;font-size:20px;display:flex;align-items:center;justify-content:center;padding:0;}
 .emoji-opt.sel{border-color:var(--peri);background:var(--peri-dim);}
@@ -1334,40 +1379,43 @@ function renderJourney(student){
       // proposal edit mode
       const editing = (STUDENT_PROPOSAL_MODE === nx.id);
 
-      return `
-      <div class="mission-card upcoming" role="region" aria-label="Próxima missão">
-        <span class="m-emoji" aria-hidden="true">${esc(MISSION_THEME_DEFAULT.emoji)}</span>
-        <div class="m-tag">Próxima missão</div>
-        <div class="m-name">${esc((nx.theme && nx.theme.name) || nx.targetStage && nx.targetSheet ? `${(nx.theme && nx.theme.name) || 'Missão de Férias'}` : 'Missão de Férias')}</div>
-        <div class="m-msg">${esc((nx.theme && nx.theme.message) || nx.message || MISSION_THEME_DEFAULT.msg)}</div>
-        <div class="m-meta">
-          ${nx.startStage ? `<span class="pill">${esc(nx.startStage)}${esc(nx.startSheet)} → ${esc(nx.targetStage)}${esc(nx.targetSheet)}</span>` : `<span class="pill">🎯 ${esc(nx.targetStage)}${esc(nx.targetSheet)}</span>`}
-          <span class="pill">${nx.startDate ? fmtDate(nx.startDate)+' – ' : 'até '}${fmtDate(nx.targetEnd)}</span>
-          ${status ? `<span class="pill">⏳ ${status}</span>` : ''}
-        </div>
-
-        ${ resp === null ? `
-          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
-            <button class="btn btn-primary" data-accept-plan="${nx.id}">✅ Aceitar missão</button>
-            <button class="btn btn-ghost" data-propose-plan="${nx.id}">✏️ Propor alternativa</button>
-          </div>
-        ` : ( resp === 'accepted' ? `
-          <div style="margin-top:12px;">
-            <span class="badge badge-green">Você aceitou esta missão</span>
-            <div class="faint" style="margin-top:8px;font-size:12px;">Respondido em ${fmtDateTime(nx.studentRespondedAt)}</div>
-          </div>
-        ` : `
-          <div style="margin-top:12px;">
-            <span class="badge badge-amber">Você propôs uma alternativa</span>
-            <div class="faint" style="margin-top:8px;font-size:12px;">
-              ${hasProposal ? `Proposta: ${esc(hasProposal.proposedStage)}${esc(hasProposal.proposedSheet)} · ${esc(hasProposal.note||'')} (enviada ${fmtDateTime(hasProposal.submittedAt)})` : 'Proposta enviada.'}
+      const mName = (nx.theme && nx.theme.name) || 'Missão de Férias';
+      const mMsg = (nx.theme && nx.theme.message) || nx.message || MISSION_THEME_DEFAULT.msg;
+      const route = nx.startStage
+        ? `<div class="mc-route">
+             <div class="mc-point"><span class="mc-lbl">Ponto de partida</span><span class="mc-val">${esc(nx.startStage)}${esc(nx.startSheet)}</span></div>
+             <span class="mc-arrow" aria-hidden="true">➜</span>
+             <div class="mc-point goal"><span class="mc-lbl">Meta</span><span class="mc-val">${esc(nx.targetStage)}${esc(nx.targetSheet)}</span></div>
+           </div>`
+        : `<div class="mc-route"><div class="mc-point goal"><span class="mc-lbl">Meta</span><span class="mc-val">${esc(nx.targetStage)}${esc(nx.targetSheet)}</span></div></div>`;
+      const dates = `<div class="mc-dates">
+          ${nx.startDate ? `<div><span class="mc-lbl">Início</span><b>${fmtDate(nx.startDate)}</b></div><div class="mc-line"></div>` : ''}
+          <div><span class="mc-lbl">${nx.startDate ? 'Fim' : 'Prazo final'}</span><b>${fmtDate(nx.targetEnd)}</b></div>
+        </div>`;
+      const respBlock = resp === null ? (editing ? '' : `
+          <div class="mc-actions">
+            <button class="btn btn-primary btn-block" data-accept-plan="${nx.id}">✅ Aceitar missão</button>
+            <button class="btn btn-ghost btn-block" data-propose-plan="${nx.id}">✏️ Propor alternativa</button>
+          </div>`)
+        : (resp === 'accepted' ? `
+          <div class="mc-status ok">
+            <span class="mc-sic">✅</span>
+            <div><b>Você aceitou esta missão</b><small>Respondido em ${fmtDateTime(nx.studentRespondedAt)}</small></div>
+          </div>`
+        : `
+          <div class="mc-status warn">
+            <span class="mc-sic">✏️</span>
+            <div>
+              <b>Você propôs uma alternativa</b>
+              <small>${hasProposal ? `Proposta: ${esc(hasProposal.proposedStage)}${esc(hasProposal.proposedSheet)} · enviada ${fmtDateTime(hasProposal.submittedAt)}` : 'Proposta enviada.'}</small>
+              ${hasProposal && hasProposal.note ? `<small class="mc-quote">“${esc(hasProposal.note)}”</small>` : ''}
+              <small>Agora é só aguardar o orientador.</small>
             </div>
-          </div>
-        ` )}
-
-        ${ editing ? `
-          <div class="forgot-editor" style="margin-top:12px;">
-            <label style="display:block;font-size:13px;color:var(--text);font-weight:700;margin-bottom:6px;">Propor alternativa (envio único)</label>
+          </div>`);
+      const editor = (editing && resp === null) ? `
+          <div class="mc-editor">
+            <div class="mc-editor-title">✏️ Sua proposta</div>
+            <p class="mc-hint">Escolha o estágio e a folha que você acha melhor e explique o motivo. A data final não muda.</p>
             <div class="field-row">
               <div class="field">
                 <label>Estágio proposto</label>
@@ -1380,16 +1428,34 @@ function renderJourney(student){
                 <input type="number" id="f-prop-sheet-${nx.id}" min="0" max="200" value="${esc(nx.targetSheet)}">
               </div>
             </div>
-            <div class="field"><label>Justificativa (opcional)</label><input id="f-prop-note-${nx.id}" maxlength="240" placeholder="Explique por que não concorda e o que propõe" value=""></div>
+            <div class="field">
+              <label>Justificativa <span class="mc-req">obrigatória</span></label>
+              <textarea id="f-prop-note-${nx.id}" rows="3" maxlength="240" placeholder="Explique com suas palavras por que você propõe essa mudança."></textarea>
+              <div class="mc-count"><span id="prop-need-${nx.id}">Escreva pelo menos ${PROPOSAL_MIN_CHARS} caracteres</span> · <span id="prop-count-${nx.id}">0</span>/240</div>
+            </div>
+            <div class="error-msg" id="prop-error-${nx.id}"></div>
             <div class="field-row">
               <button class="btn btn-ghost btn-block btn-sm" id="btn-cancel-proposal" data-proposal-cancel="${nx.id}">Cancelar</button>
-              <button class="btn btn-primary btn-block btn-sm" id="btn-send-proposal" data-proposal-send="${nx.id}">Enviar proposta</button>
+              <button class="btn btn-primary btn-block btn-sm" id="btn-send-proposal" data-proposal-send="${nx.id}" disabled>Enviar proposta</button>
             </div>
-            <p class="faint" style="font-size:11px;margin-top:8px;">A data final da missão não pode ser alterada pelo aluno; apenas sugira estágio/folha e escreva sua justificativa.</p>
-          </div>
-        ` : ''}
+          </div>` : '';
 
-        <p class="faint" style="font-size:11.5px;margin:12px 0 0;">Por enquanto, a ativação da meta (iniciar oficialmente) é responsabilidade do orientador.</p>
+      return `
+      <div class="mission-card upcoming" role="region" aria-label="Próxima missão">
+        <div class="mc-head">
+          <span class="mc-emoji" aria-hidden="true">${esc(MISSION_THEME_DEFAULT.emoji)}</span>
+          <div class="mc-head-text">
+            <div class="m-tag">Próxima missão</div>
+            <div class="m-name">${esc(mName)}</div>
+            ${status ? `<span class="mc-chip">⏳ ${status}</span>` : ''}
+          </div>
+        </div>
+        <div class="m-msg">${esc(mMsg)}</div>
+        ${route}
+        ${dates}
+        ${respBlock}
+        ${editor}
+        <p class="mc-foot">Quem inicia oficialmente a nova meta é o orientador.</p>
       </div>`;
     })()}
 
@@ -1631,22 +1697,23 @@ function renderMetaHistoryRows(student, forAdmin){
     const th = e.theme || null;
     const from = e.startStage ? `${esc(e.startStage)}${esc(e.startSheet)} → ` : '';
     const studentRespHtml = (()=> {
-      if(!e.studentResponse) return `<div class="faint" style="font-size:12px;margin-top:6px;">⏳ Aguardando resposta do aluno</div>`;
-      if(e.studentResponse==='accepted') return `<div class="faint" style="font-size:12px;margin-top:6px;">Aluno aceitou em ${fmtDateTime(e.studentRespondedAt)}</div>`;
-      if(e.studentResponse==='proposed' && e.studentProposal) {
-        return `<div class="faint" style="font-size:12px;margin-top:6px;">Proposta: ${esc(e.studentProposal.proposedStage)}${esc(e.studentProposal.proposedSheet)} · ${esc(e.studentProposal.note||'')} <div class="faint" style="font-size:11px;margin-top:4px;">(enviada ${fmtDateTime(e.studentProposal.submittedAt)})</div></div>`;
+      if(!e.studentResponse) return `<div class="pc-resp wait">⏳ Aguardando resposta do aluno</div>`;
+      if(e.studentResponse==='accepted') return `<div class="pc-resp ok"><b>✅ Aluno aceitou a missão</b><small>${fmtDateTime(e.studentRespondedAt)}</small></div>`;
+      if(e.studentResponse==='proposed' && e.studentProposal){
+        const pr = e.studentProposal;
+        return `<div class="pc-resp warn"><b>✏️ Aluno propôs: ${esc(pr.proposedStage)}${esc(pr.proposedSheet)}</b><small>${fmtDateTime(pr.submittedAt)}</small>${pr.note ? `<div class="pc-note">“${esc(pr.note)}”</div>` : ''}</div>`;
       }
       return '';
     })();
     rows.push(`
-      <div class="meta-row">
-        <span class="meta-badge planned">${th ? esc(th.emoji)+' ' : ''}Planejada</span>
-        <div class="meta-range">
-          <div>${from}${esc(e.targetStage)}${esc(e.targetSheet)}</div>
-          <div class="meta-extra">${e.startDate ? `${fmtDate(e.startDate)} até ` : 'até '}${fmtDate(e.targetEnd)}${e.theme && e.theme.name ? ' · '+esc(e.theme.name) : ''}</div>
-          ${studentRespHtml}
+      <div class="plan-card">
+        <div class="plan-top">
+          <span class="meta-badge planned">${th ? esc(th.emoji)+' ' : ''}Planejada</span>
+          ${forAdmin ? `<div class="plan-actions"><button class="btn btn-ghost btn-sm" data-edit-planned="${e.id}">Editar</button><button class="btn btn-ghost btn-sm" data-remove-planned="${e.id}">Remover</button></div>` : ''}
         </div>
-        ${forAdmin ? `<div style="display:flex;gap:6px;flex-shrink:0;"><button class="btn btn-ghost btn-sm" data-edit-planned="${e.id}">Editar</button><button class="btn btn-ghost btn-sm" data-remove-planned="${e.id}">Remover</button></div>` : ''}
+        <div class="plan-route">${e.startStage ? `<span>${esc(e.startStage)}${esc(e.startSheet)}</span><span class="arr">➜</span>` : ''}<span class="goal">${esc(e.targetStage)}${esc(e.targetSheet)}</span></div>
+        <div class="plan-dates">${e.startDate ? `${fmtDate(e.startDate)} até ` : 'até '}${fmtDate(e.targetEnd)}${e.theme && e.theme.name ? ' · '+esc(e.theme.name) : ''}</div>
+        ${studentRespHtml}
       </div>`);
   });
 
@@ -2791,6 +2858,28 @@ function attachHandlers(){
   if($('#btn-save-target')) $('#btn-save-target').onclick = saveStudentEdit;
   if($('#btn-plan-meta')) $('#btn-plan-meta').onclick = ()=>{ PLAN_EDIT_ID=null; PLAN_THEME_DRAFT=null; PLAN_META_MODE=true; render(); };
   $$('[data-edit-planned]').forEach(btn=> btn.onclick = ()=>{ PLAN_EDIT_ID=btn.getAttribute('data-edit-planned'); PLAN_THEME_DRAFT=null; PLAN_META_MODE=true; render(); });
+  // justificativa obrigatória: o botão só habilita com pelo menos 5 letras
+  $$('[id^="f-prop-note-"]').forEach(ta=>{
+    const pid = ta.id.replace('f-prop-note-','');
+    const sendBtn = document.getElementById('btn-send-proposal');
+    const cnt = document.getElementById('prop-count-'+pid);
+    const er = document.getElementById('prop-error-'+pid);
+    const need = document.getElementById('prop-need-'+pid);
+    const sync = ()=>{
+      if(cnt) cnt.textContent = ta.value.length;
+      const ok = proposalNoteOk(ta.value);
+      const len = ta.value.trim().length;
+      if(need){
+        if(ok) need.textContent = '✅ Justificativa ok';
+        else if(len < PROPOSAL_MIN_CHARS){ const f = PROPOSAL_MIN_CHARS-len; need.textContent = f===1 ? 'Falta 1 caractere' : `Faltam ${f} caracteres`; }
+        else need.textContent = `Escreva pelo menos ${PROPOSAL_MIN_WORDS} palavras`;
+        need.style.color = ok ? 'var(--mint)' : '';
+      }
+      if(sendBtn) sendBtn.disabled = !ok;
+      if(ok && er) er.textContent = '';
+    };
+    ta.oninput = sync; sync();
+  });
   bindThemeEditor('plan', ()=>PLAN_THEME_DRAFT);
   bindThemeEditor('edit', ()=>EDIT_THEME_DRAFT);
   if($('#btn-cancel-plan')) $('#btn-cancel-plan').onclick = ()=>{ PLAN_META_MODE=false; PLAN_THEME_DRAFT=null; PLAN_EDIT_ID=null; render(); };
@@ -3006,6 +3095,12 @@ async function removeBlock(index){
 }
 
 /* ---------- Proposta / Aceite do aluno (fluxo solicitado) ---------- */
+// Justificativa da proposta do aluno: precisa ser uma explicação de verdade
+const PROPOSAL_MIN_CHARS = 30;
+const PROPOSAL_MIN_WORDS = 5;
+const proposalWordCount = (t) => (String(t||'').trim().match(/\S+/g) || []).length;
+const proposalNoteOk = (t) => String(t||'').trim().length >= PROPOSAL_MIN_CHARS && proposalWordCount(t) >= PROPOSAL_MIN_WORDS;
+
 // ---- Respostas do aluno às metas planejadas ----
 // Ficam numa coleção própria (plan_responses), assim o aluno não precisa sobrescrever o banco inteiro.
 const PLAN_RESPONSES = 'plan_responses';
@@ -3104,6 +3199,13 @@ async function handleStudentProposeSubmit(entryId){
 
   if(proposedSheetRaw==='' || !isValidSheet(proposedSheet)){
     showToast('Informe uma folha válida (0–200).'); return;
+  }
+  if(!proposalNoteOk(note)){
+    const er = document.getElementById(`prop-error-${entryId}`);
+    if(er) er.textContent = `Explique melhor o motivo da sua proposta: escreva uma frase com pelo menos ${PROPOSAL_MIN_CHARS} caracteres e ${PROPOSAL_MIN_WORDS} palavras.`;
+    else showToast('Escreva a justificativa para enviar sua proposta.');
+    if(noteEl) noteEl.focus();
+    return;
   }
 
   // envio único: vai para a coleção de respostas, sem reescrever o banco inteiro
