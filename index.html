@@ -2043,6 +2043,18 @@ function monthSheets(student, ym){
 function correctedInRange(student, rangeStart, rangeEnd){
   return student.blocks.filter(b=> b.correctedDate && b.correctedDate>=rangeStart && b.correctedDate<=rangeEnd).length;
 }
+// Correções do Hall: soma as da meta atual + as de metas já encerradas (que ficam guardadas no histórico),
+// para o mês/trimestre não "perder" correções depois que o trimestre é encerrado.
+function hallCorrectedInRange(student, rangeStart, rangeEnd){
+  const inRange = b => b.correctedDate && b.correctedDate>=rangeStart && b.correctedDate<=rangeEnd;
+  let n = (student.blocks || []).filter(inRange).length;
+  (student.metaHistory || []).forEach(h=>{
+    if(h.status==='completed' && h.undoSnapshot && Array.isArray(h.undoSnapshot.blocks)){
+      n += h.undoSnapshot.blocks.filter(inRange).length;
+    }
+  });
+  return n;
+}
 function attendanceInRange(student, rangeStart, rangeEnd){
   return Object.keys(student.attendance || {}).filter(d=> d>=rangeStart && d<=rangeEnd).length;
 }
@@ -2125,26 +2137,26 @@ function renderAdminHall(){
 }
 function renderHallTabBody(){
   const list = DATA.students;
-  if(HALL_TAB==='streak'){
-    const sorted = [...list].sort((a,b)=>streakStats(b).total-streakStats(a).total || a.name.localeCompare(b.name,'pt-BR',{sensitivity:'base'}));
-    const ranked = withCompetitionRank(sorted, st=>streakStats(st).total);
-    return `<div class="card">${ranked.map(({item:st, rank, tied})=>`
-      <div class="hall-row ${rank<=3?'top3':''}" data-open-student="${st.id}" style="cursor:pointer;">
+  if(HALL_TAB==='streak' || HALL_TAB==='correction'){
+    // Constância e Correções respeitam o período escolhido (Mês ou Trimestre), igual às Folhas
+    const range = hallFolhasRange();
+    if(!range){
+      return `<p class="muted center" style="margin:24px 0;font-size:13px;">Defina as datas do trimestre atual em Perfil → Trimestre atual pra ver esse período aqui.</p>`;
+    }
+    const isStreak = HALL_TAB==='streak';
+    const valueOf = (st)=> isStreak ? attendanceInRange(st, range.start, range.end) : hallCorrectedInRange(st, range.start, range.end);
+    const sorted = list
+      .map(st=>({ st, v: valueOf(st) }))
+      .sort((a,b)=> b.v - a.v || a.st.name.localeCompare(b.st.name,'pt-BR',{sensitivity:'base'}));
+    const ranked = withCompetitionRank(sorted, r=>r.v);
+    return `
+      <p class="faint" style="font-size:11.5px;margin:0 0 10px;text-transform:capitalize;">${esc(range.label)}</p>
+      <div class="card">${ranked.map(({item:r, rank, tied})=>`
+      <div class="hall-row ${rank<=3?'top3':''}" data-open-student="${r.st.id}" style="cursor:pointer;">
         ${hallRankMark(rank)}
-        <span class="hall-avatar">${st.avatar}</span>
-        <span class="hall-name">${esc(st.name)}</span>
-        <span class="hall-metric" style="color:var(--amber);">🔥 ${streakStats(st).total}</span>
-      </div>`).join('')}</div>`;
-  }
-  if(HALL_TAB==='correction'){
-    const sorted = [...list].sort((a,b)=> stats(b).correctionRatio - stats(a).correctionRatio || stats(b).done - stats(a).done || a.name.localeCompare(b.name,'pt-BR',{sensitivity:'base'}));
-    const ranked = withCompetitionRank(sorted, st=>Math.round(stats(st).correctionRatio*100));
-    return `<div class="card">${ranked.map(({item:st, rank, tied})=>`
-      <div class="hall-row ${rank<=3?'top3':''}" data-open-student="${st.id}" style="cursor:pointer;">
-        ${hallRankMark(rank)}
-        <span class="hall-avatar">${st.avatar}</span>
-        <span class="hall-name">${esc(st.name)}</span>
-        <span class="hall-metric" style="color:var(--mint);">🧠 ${Math.round(stats(st).correctionRatio*100)}%</span>
+        <span class="hall-avatar">${r.st.avatar}</span>
+        <span class="hall-name">${esc(r.st.name)}</span>
+        <span class="hall-metric" style="color:${isStreak?'var(--amber)':'var(--mint)'};">${isStreak?'🔥':'🧠'} ${r.v}</span>
       </div>`).join('')}</div>`;
   }
   return renderSheetsRanking();
