@@ -1631,7 +1631,7 @@ function renderMetaHistoryRows(student, forAdmin){
     const th = e.theme || null;
     const from = e.startStage ? `${esc(e.startStage)}${esc(e.startSheet)} → ` : '';
     const studentRespHtml = (()=> {
-      if(!e.studentResponse) return '';
+      if(!e.studentResponse) return `<div class="faint" style="font-size:12px;margin-top:6px;">⏳ Aguardando resposta do aluno</div>`;
       if(e.studentResponse==='accepted') return `<div class="faint" style="font-size:12px;margin-top:6px;">Aluno aceitou em ${fmtDateTime(e.studentRespondedAt)}</div>`;
       if(e.studentResponse==='proposed' && e.studentProposal) {
         return `<div class="faint" style="font-size:12px;margin-top:6px;">Proposta: ${esc(e.studentProposal.proposedStage)}${esc(e.studentProposal.proposedSheet)} · ${esc(e.studentProposal.note||'')} <div class="faint" style="font-size:11px;margin-top:4px;">(enviada ${fmtDateTime(e.studentProposal.submittedAt)})</div></div>`;
@@ -2255,6 +2255,7 @@ function studentsListHtml(){
           </div>
           <div class="meta-row">
             <span class="faint" style="font-size:10px;">🕓 ${fmtDateTime(s.updatedAt)}</span>
+            ${planResponseBadge(s)}
           </div>
         </div>
       </button>`;
@@ -2575,6 +2576,7 @@ function renderAdminDetail(){
         </div>
         <div class="row" style="margin-top:10px;">
           <div class="faint mono" style="font-size:11.5px;">🕓 Última atualização: ${fmtDateTime(student.updatedAt)}</div>
+          ${planResponseBadge(student)}
           <button class="btn btn-ghost btn-sm" id="btn-edit-student">✏️ Editar aluno</button>
         </div>
       `}
@@ -2904,6 +2906,7 @@ function handleStudentLogin(){
   if(!student){ LOGIN_ERROR='Código não encontrado. Confira com seu orientador.'; render(); return;
   }
   LOGIN_ERROR=''; SESSION={role:'student',studentId:student.id}; STUDENT_VIEW='journey'; render();
+  loadPlanResponsesForStudent(student).then(changed=>{ if(changed && SESSION && SESSION.studentId===student.id) render(); });
 }
 async function handleAdminLogin(){
   const now=Date.now();
@@ -3003,6 +3006,70 @@ async function removeBlock(index){
 }
 
 /* ---------- Proposta / Aceite do aluno (fluxo solicitado) ---------- */
+// ---- Respostas do aluno às metas planejadas ----
+// Ficam numa coleção própria (plan_responses), assim o aluno não precisa sobrescrever o banco inteiro.
+const PLAN_RESPONSES = 'plan_responses';
+const planResponseDocId = (studentId, entryId) => `${studentId}_${entryId}`;
+const hasFirestore = () => !!(window.firebase && typeof db !== 'undefined' && db);
+function applyPlanResponse(entry, r){
+  if(!entry || !r || entry.studentResponse) return false;
+  entry.studentResponse = r.response;
+  entry.studentRespondedAt = r.respondedAt || null;
+  if(r.response === 'proposed'){
+    entry.studentProposal = { proposedStage:r.proposedStage, proposedSheet:r.proposedSheet, note:r.note||'', submittedAt:r.respondedAt||null };
+  }
+  return true;
+}
+async function sendPlanResponse(student, entry, response, proposal){
+  if(!hasFirestore()) return { ok:false };
+  const payload = { studentId:student.id, entryId:entry.id, response, respondedAt:new Date().toISOString() };
+  if(proposal){ payload.proposedStage = proposal.proposedStage; payload.proposedSheet = proposal.proposedSheet; payload.note = proposal.note || ''; }
+  try{
+    await db.collection(PLAN_RESPONSES).doc(planResponseDocId(student.id, entry.id)).set(payload);
+    return { ok:true, payload };
+  }catch(e){
+    console.warn('Falha ao enviar resposta da meta', e);
+    FIREBASE_LAST_ERROR = e;
+    return { ok:false, error:e };
+  }
+}
+async function loadPlanResponsesForStudent(student){
+  if(!hasFirestore()) return false;
+  let changed = false;
+  for(const entry of (student.metaHistory||[]).filter(e=>e.status==='planned' && !e.studentResponse)){
+    try{
+      const doc = await db.collection(PLAN_RESPONSES).doc(planResponseDocId(student.id, entry.id)).get();
+      if(doc.exists && applyPlanResponse(entry, doc.data())) changed = true;
+    }catch(e){ console.warn('Falha ao ler resposta da meta', e); }
+  }
+  return changed;
+}
+async function syncPlanResponsesAdmin(){
+  if(!hasFirestore() || !auth || !auth.currentUser || !DATA || !DATA.students) return;
+  try{
+    const snap = await db.collection(PLAN_RESPONSES).get();
+    let changed = false;
+    snap.forEach(doc=>{
+      const r = doc.data() || {};
+      const st = DATA.students.find(x=>x.id===r.studentId);
+      const entry = st && (st.metaHistory||[]).find(e=>e.id===r.entryId && e.status==='planned');
+      if(entry && applyPlanResponse(entry, r)){ touch(st); changed = true; }
+    });
+    if(changed){
+      await saveData();
+      if(!EDIT_STUDENT_MODE && !PLAN_META_MODE) render();
+    }
+  }catch(e){ console.warn('Falha ao sincronizar respostas dos alunos', e); }
+}
+// selo de status da resposta (visão do orientador)
+function planResponseBadge(student){
+  const e = (student.metaHistory||[]).find(x=>x.status==='planned');
+  if(!e) return '';
+  if(e.studentResponse==='accepted') return '<span class="badge badge-green" style="font-size:10.5px;">✅ Missão aceita</span>';
+  if(e.studentResponse==='proposed') return '<span class="badge badge-amber" style="font-size:10.5px;">✏️ Propôs alternativa</span>';
+  return '<span class="badge" style="font-size:10.5px;color:var(--text-muted);border:1px solid var(--border);">⏳ Aguardando resposta</span>';
+}
+
 async function handleStudentAccept(entryId){
   if(!SESSION || SESSION.role!=='student') return;
   const student = DATA.students.find(s=>s.id===SESSION.studentId);
@@ -3010,15 +3077,13 @@ async function handleStudentAccept(entryId){
   const entry = (student.metaHistory||[]).find(e=>e.id===entryId && e.status==='planned');
   if(!entry) return;
   if(entry.studentResponse) { showToast('Você já respondeu essa proposta.'); return; }
-  entry.studentResponse = 'accepted';
-  entry.studentRespondedAt = new Date().toISOString();
-  touch(student);
-  await saveData();
-  showToast('Missão aceita! Obrigado pela confirmação.');
+  const res = await sendPlanResponse(student, entry, 'accepted');
+  SAVE_FAILURE_PENDING = false;
+  if(!res.ok){ showToast('⚠️ Não foi possível enviar sua resposta agora. Tente de novo em instantes.'); return; }
+  applyPlanResponse(entry, res.payload);
   STUDENT_PROPOSAL_MODE = null;
-  render();
+  showToast('Missão aceita! O orientador já pode ver sua resposta.');
 }
-
 async function handleStudentProposeSubmit(entryId){
   if(!SESSION || SESSION.role!=='student') return;
   const student = DATA.students.find(s=>s.id===SESSION.studentId);
@@ -3041,20 +3106,13 @@ async function handleStudentProposeSubmit(entryId){
     showToast('Informe uma folha válida (0–200).'); return;
   }
 
-  // grava a proposta — envio único
-  entry.studentResponse = 'proposed';
-  entry.studentProposal = {
-    proposedStage,
-    proposedSheet,
-    note,
-    submittedAt: new Date().toISOString()
-  };
-  entry.studentRespondedAt = new Date().toISOString();
-  touch(student);
-  await saveData();
-  showToast('Proposta enviada ao orientador.');
+  // envio único: vai para a coleção de respostas, sem reescrever o banco inteiro
+  const res = await sendPlanResponse(student, entry, 'proposed', { proposedStage, proposedSheet, note });
+  SAVE_FAILURE_PENDING = false;
+  if(!res.ok){ showToast('⚠️ Não foi possível enviar sua proposta agora. Tente de novo em instantes.'); return; }
+  applyPlanResponse(entry, res.payload);
   STUDENT_PROPOSAL_MODE = null;
-  render();
+  showToast('Proposta enviada ao orientador.');
 }
 
 /* ---------- Manuseio de avisos de esquecimento ---------- */
@@ -3463,6 +3521,7 @@ async function loadBackupsList(){
         ADMIN_LOGIN_STAGE=false;
         LOGIN_ERROR='';
         render();
+        syncPlanResponsesAdmin();
       }else if(SESSION.role==='admin'){
         SESSION={role:null,studentId:null};
         ADMIN_LOGIN_STAGE=false;
@@ -3471,6 +3530,7 @@ async function loadBackupsList(){
         render();
       }
     });
+    setInterval(()=>{ if(SESSION && SESSION.role==='admin') syncPlanResponsesAdmin(); }, 60000);
   }
 })();
 </script>
