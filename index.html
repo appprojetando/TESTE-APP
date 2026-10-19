@@ -509,6 +509,20 @@ input,select{font-family:inherit;}
 .mc-hint{font-size:12px;color:var(--text-muted);margin:4px 0 12px;line-height:1.4;}
 .mc-req{margin-left:6px;padding:1px 7px;border-radius:6px;font-size:10px;font-weight:700;background:var(--amber-dim);color:var(--amber);border:1px solid #FFB64844;}
 .mc-count{text-align:right;font-size:11px;color:var(--text-faint);margin-top:4px;font-family:'JetBrains Mono',monospace;}
+
+.mc-art{position:relative;margin:-16px -16px 14px;line-height:0;border-bottom:1px solid #37E2A033;}
+.mc-art svg{display:block;width:100%;height:auto;}
+.mc-art-cap{position:absolute;left:12px;bottom:10px;line-height:1.2;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.88);color:#0B5C7A;font-weight:700;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.18);}
+.mc-art .sun-rays{transform-origin:330px 42px;animation:mcspin 28s linear infinite;}
+.mc-art .wave1{animation:mcwave 7s linear infinite;}
+.mc-art .wave2{animation:mcwave 11s linear infinite reverse;}
+.mc-art .cloud{animation:mcdrift 18s ease-in-out infinite alternate;}
+.mc-art .palm{transform-origin:70px 138px;animation:mcsway 4.5s ease-in-out infinite alternate;}
+@keyframes mcspin{to{transform:rotate(360deg);}}
+@keyframes mcwave{from{transform:translateX(0);}to{transform:translateX(-200px);}}
+@keyframes mcdrift{from{transform:translateX(-12px);}to{transform:translateX(18px);}}
+@keyframes mcsway{from{transform:rotate(-1.6deg);}to{transform:rotate(1.6deg);}}
+@media (prefers-reduced-motion:reduce){.mc-art *{animation:none !important;}}
 .mc-foot{font-size:11.5px;color:var(--text-faint);margin:14px 0 0;line-height:1.4;}
 .field textarea{width:100%;background:var(--bg-surface-2);border:1px solid var(--border);color:var(--text);padding:12px 13px;border-radius:10px;font-size:14.5px;outline:none;font-family:inherit;resize:vertical;}
 .field textarea:focus{border-color:#37E2A088;}
@@ -1404,6 +1418,39 @@ function renderJourney(student){
       const cstatus = startsIn>0 ? `Começa em ${startsIn} ${startsIn===1?'dia':'dias'}` : (left===null ? '' : (left>=0 ? `Faltam ${left} ${left===1?'dia':'dias'}` : 'Prazo finalizado'));
       return `
       <div class="mission-card current" role="region" aria-label="Missão de férias em andamento">
+        ${startsIn===0 ? `<div class="mc-art" aria-hidden="false">
+          <svg viewBox="0 0 400 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Praia ensolarada com coqueiro">
+            <defs>
+              <linearGradient id="mcSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4FB6F2"/><stop offset="1" stop-color="#CFF1FF"/></linearGradient>
+              <linearGradient id="mcSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#27A5DE"/><stop offset="1" stop-color="#6FD3F2"/></linearGradient>
+              <radialGradient id="mcGlow"><stop offset="0" stop-color="#FFE98A" stop-opacity=".9"/><stop offset="1" stop-color="#FFE98A" stop-opacity="0"/></radialGradient>
+            </defs>
+            <rect width="400" height="150" fill="url(#mcSky)"/>
+            <circle cx="330" cy="42" r="46" fill="url(#mcGlow)"/>
+            <g class="sun-rays" stroke="#FFD34D" stroke-width="3" stroke-linecap="round">
+              <line x1="330" y1="10" x2="330" y2="18"/><line x1="330" y1="66" x2="330" y2="74"/>
+              <line x1="298" y1="42" x2="306" y2="42"/><line x1="354" y1="42" x2="362" y2="42"/>
+              <line x1="307" y1="19" x2="313" y2="25"/><line x1="347" y1="59" x2="353" y2="65"/>
+              <line x1="353" y1="19" x2="347" y2="25"/><line x1="313" y1="59" x2="307" y2="65"/>
+            </g>
+            <circle cx="330" cy="42" r="19" fill="#FFD34D"/>
+            <g class="cloud" fill="#fff" opacity=".92"><ellipse cx="170" cy="34" rx="26" ry="9"/><ellipse cx="190" cy="28" rx="18" ry="9"/><ellipse cx="152" cy="30" rx="14" ry="7"/></g>
+            <g class="cloud" fill="#fff" opacity=".8" style="animation-duration:24s"><ellipse cx="250" cy="70" rx="20" ry="6"/><ellipse cx="264" cy="65" rx="12" ry="6"/></g>
+            <rect y="92" width="400" height="40" fill="url(#mcSea)"/>
+            <g class="wave1"><path d="M-200 100 q25 -9 50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 V112 H-200Z" fill="#fff" opacity=".35"/></g>
+            <g class="wave2"><path d="M-200 112 q25 -9 50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 V124 H-200Z" fill="#fff" opacity=".3"/></g>
+            <path d="M0 150 V124 Q90 108 200 122 T400 116 V150Z" fill="#F7D98F"/>
+            <path d="M0 150 V136 Q120 126 240 136 T400 132 V150Z" fill="#EBC574" opacity=".7"/>
+            <g class="palm">
+              <path d="M70 140 Q80 102 66 62" stroke="#8B5A2B" stroke-width="7" fill="none" stroke-linecap="round"/>
+              <g fill="#2FBF71"><path d="M66 62 Q40 28 6 54 Q40 44 66 62Z"/><path d="M66 62 Q52 22 24 20 Q50 34 66 62Z" fill="#23A862"/><path d="M66 62 Q84 24 114 30 Q86 40 66 62Z"/><path d="M66 62 Q100 44 126 72 Q96 60 66 62Z" fill="#23A862"/><path d="M66 62 Q64 34 70 12 Q78 38 66 62Z"/></g>
+              <circle cx="62" cy="66" r="4" fill="#7A4A1E"/><circle cx="71" cy="67" r="4" fill="#6A3F19"/>
+            </g>
+            <g transform="translate(250 126)"><path d="M0 14 L12 -2 L24 14Z" fill="#FF7A59"/><path d="M12 -2 V-12" stroke="#8B5A2B" stroke-width="2"/><path d="M12 -12 l12 4 l-12 4Z" fill="#FFD34D"/><rect x="-6" y="14" width="36" height="3" rx="1.5" fill="#fff" opacity=".7"/></g>
+            <g transform="translate(150 132)"><path d="M0 4 q8 -12 16 0 q-8 6 -16 0Z" fill="#FF8FA3"/><circle cx="8" cy="3" r="2" fill="#fff"/></g>
+          </svg>
+          <div class="mc-art-cap">Boas férias! Bora cumprir a meta 🌴</div>
+        </div>` : ''}
         <div class="mc-head">
           <span class="mc-emoji" aria-hidden="true">${esc(MISSION_THEME_DEFAULT.emoji)}</span>
           <div class="mc-head-text">
@@ -1423,15 +1470,9 @@ function renderJourney(student){
       const startsIn = nx.startDate && nx.startDate > today ? daysBetween(today, nx.startDate) : 0;
       const left = nx.targetEnd ? daysBetween(today, nx.targetEnd) : null;
       const status = startsIn>0 ? `Começa em ${startsIn} ${startsIn===1?'dia':'dias'}` : (left===null ? '' : (left>=0 ? `Faltam ${left} ${left===1?'dia':'dias'}` : 'Prazo finalizado'));
-      // show student response state
-      const resp = nx.studentResponse || null;
-      const hasProposal = nx.studentProposal || null;
-      // proposal edit mode
-      const editing = (STUDENT_PROPOSAL_MODE === nx.id);
-
       const isVac = modeOfEntry(nx) === 'vacation';
       const mName = isVac ? ((nx.theme && nx.theme.name) || 'Missão de Férias') : 'Nova meta';
-      const mMsg = isVac ? ((nx.theme && nx.theme.message) || nx.message || MISSION_THEME_DEFAULT.msg) : 'Seu orientador planejou o próximo passo da sua evolução. Veja o caminho e responda abaixo.';
+      const mMsg = isVac ? ((nx.theme && nx.theme.message) || nx.message || MISSION_THEME_DEFAULT.msg) : 'Seu orientador planejou o próximo passo da sua evolução. Veja o caminho que vem por aí!';
       const route = nx.startStage
         ? `<div class="mc-route">
              <div class="mc-point"><span class="mc-lbl">Ponto de partida</span><span class="mc-val">${esc(nx.startStage)}${esc(nx.startSheet)}</span></div>
@@ -1443,54 +1484,6 @@ function renderJourney(student){
           ${nx.startDate ? `<div><span class="mc-lbl">Início</span><b>${fmtDate(nx.startDate)}</b></div><div class="mc-line"></div>` : ''}
           <div><span class="mc-lbl">${nx.startDate ? 'Fim' : 'Prazo final'}</span><b>${fmtDate(nx.targetEnd)}</b></div>
         </div>`;
-      const respBlock = resp === null ? (editing ? '' : `
-          <div class="mc-actions">
-            <button class="btn btn-primary btn-block" data-accept-plan="${nx.id}">✅ Aceitar ${isVac ? 'missão' : 'meta'}</button>
-            <button class="btn btn-ghost btn-block" data-propose-plan="${nx.id}">✏️ Propor alternativa</button>
-          </div>`)
-        : (resp === 'accepted' ? `
-          <div class="mc-status ok">
-            <span class="mc-sic">✅</span>
-            <div><b>Você aceitou ${isVac ? 'esta missão' : 'esta meta'}</b><small>Respondido em ${fmtDateTime(nx.studentRespondedAt)}</small></div>
-          </div>`
-        : `
-          <div class="mc-status warn">
-            <span class="mc-sic">✏️</span>
-            <div>
-              <b>Você propôs uma alternativa</b>
-              <small>${hasProposal ? `Proposta: ${esc(hasProposal.proposedStage)}${esc(hasProposal.proposedSheet)} · enviada ${fmtDateTime(hasProposal.submittedAt)}` : 'Proposta enviada.'}</small>
-              ${hasProposal && hasProposal.note ? `<small class="mc-quote">“${esc(hasProposal.note)}”</small>` : ''}
-              <small>Agora é só aguardar o orientador.</small>
-            </div>
-          </div>`);
-      const editor = (editing && resp === null) ? `
-          <div class="mc-editor">
-            <div class="mc-editor-title">✏️ Sua proposta</div>
-            <p class="mc-hint">Escolha o estágio e a folha que você acha melhor e explique o motivo. A data final não muda.</p>
-            <div class="field-row">
-              <div class="field">
-                <label>Estágio proposto</label>
-                <select id="f-prop-stage-${nx.id}">
-                  ${STAGES.map(st=>`<option value="${st}" ${st===nx.targetStage?'selected':''}>${st}</option>`).join('')}
-                </select>
-              </div>
-              <div class="field">
-                <label>Folha final proposta</label>
-                <input type="number" id="f-prop-sheet-${nx.id}" min="0" max="200" value="${esc(nx.targetSheet)}">
-              </div>
-            </div>
-            <div class="field">
-              <label>Justificativa <span class="mc-req">obrigatória</span></label>
-              <textarea id="f-prop-note-${nx.id}" rows="3" maxlength="240" placeholder="Explique com suas palavras por que você propõe essa mudança."></textarea>
-              <div class="mc-count"><span id="prop-need-${nx.id}">Escreva pelo menos ${PROPOSAL_MIN_CHARS} caracteres</span> · <span id="prop-count-${nx.id}">0</span>/240</div>
-            </div>
-            <div class="error-msg" id="prop-error-${nx.id}"></div>
-            <div class="field-row">
-              <button class="btn btn-ghost btn-block btn-sm" id="btn-cancel-proposal" data-proposal-cancel="${nx.id}">Cancelar</button>
-              <button class="btn btn-primary btn-block btn-sm" id="btn-send-proposal" data-proposal-send="${nx.id}" disabled>Enviar proposta</button>
-            </div>
-          </div>` : '';
-
       return `
       <div class="mission-card upcoming" role="region" aria-label="${isVac ? 'Próxima missão' : 'Próxima meta'}">
         <div class="mc-head">
@@ -1504,8 +1497,6 @@ function renderJourney(student){
         <div class="m-msg">${esc(mMsg)}</div>
         ${route}
         ${dates}
-        ${respBlock}
-        ${editor}
         <p class="mc-foot">Quem inicia oficialmente a nova meta é o orientador.</p>
       </div>`;
     })()}
@@ -1747,15 +1738,7 @@ function renderMetaHistoryRows(student, forAdmin){
   (forAdmin ? planned : []).forEach(e=>{
     const th = e.theme || null;
     const from = e.startStage ? `${esc(e.startStage)}${esc(e.startSheet)} → ` : '';
-    const studentRespHtml = (()=> {
-      if(!e.studentResponse) return `<div class="pc-resp wait">⏳ Aguardando resposta do aluno</div>`;
-      if(e.studentResponse==='accepted') return `<div class="pc-resp ok"><b>✅ Aluno aceitou ${modeOfEntry(e)==='vacation' ? 'a missão' : 'a meta'}</b><small>${fmtDateTime(e.studentRespondedAt)}</small></div>`;
-      if(e.studentResponse==='proposed' && e.studentProposal){
-        const pr = e.studentProposal;
-        return `<div class="pc-resp warn"><b>✏️ Aluno propôs: ${esc(pr.proposedStage)}${esc(pr.proposedSheet)}</b><small>${fmtDateTime(pr.submittedAt)}</small>${pr.note ? `<div class="pc-note">“${esc(pr.note)}”</div>` : ''}</div>`;
-      }
-      return '';
-    })();
+    const studentRespHtml = '';
     rows.push(`
       <div class="plan-card">
         <div class="plan-top">
@@ -3228,13 +3211,7 @@ async function syncPlanResponsesAdmin(){
   }catch(e){ console.warn('Falha ao sincronizar respostas dos alunos', e); }
 }
 // selo de status da resposta (visão do orientador)
-function planResponseBadge(student){
-  const e = (student.metaHistory||[]).find(x=>x.status==='planned');
-  if(!e) return '';
-  if(e.studentResponse==='accepted') return '<span class="badge badge-green" style="font-size:10.5px;">✅ Missão aceita</span>';
-  if(e.studentResponse==='proposed') return '<span class="badge badge-amber" style="font-size:10.5px;">✏️ Propôs alternativa</span>';
-  return '<span class="badge" style="font-size:10.5px;color:var(--text-muted);border:1px solid var(--border);">⏳ Aguardando resposta</span>';
-}
+function planResponseBadge(student){ return ''; }
 
 async function handleStudentAccept(entryId){
   if(!SESSION || SESSION.role!=='student') return;
