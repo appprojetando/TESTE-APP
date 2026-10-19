@@ -549,6 +549,47 @@ input,select{font-family:inherit;}
 .jc-stat{text-align:center;padding:8px 4px;border-radius:12px;background:var(--bg-surface-2);border:1px solid var(--border);}
 .jc-stat b{display:block;font-size:14px;color:var(--text);}
 .jc-stat small{display:block;margin-top:2px;font-size:10.5px;color:var(--text-faint);letter-spacing:.04em;}
+
+/* trilha compacta */
+.tr-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:4px 0 10px;}
+.tr-nextlbl{font-size:12px;color:var(--peri);font-family:'JetBrains Mono',monospace;}
+.tr-nextlbl b{color:var(--text);}
+.tr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:6px;}
+.tr-chip{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:6px 2px;border-radius:9px;background:var(--bg-surface-2);border:1px solid var(--border);color:var(--text-faint);font-family:'JetBrains Mono',monospace;min-height:40px;}
+.tr-num{font-size:11px;font-weight:700;line-height:1.1;}
+.tr-ic{font-size:10px;line-height:1;min-height:10px;}
+.tr-chip.ok{background:var(--mint-dim);border-color:#37E2A066;color:var(--mint);}
+.tr-chip.wait{background:var(--amber-dim);border-color:#FFB64866;color:var(--amber);}
+.tr-chip.next{border-color:var(--peri);box-shadow:0 0 0 2px #8C93FF40;color:var(--text);}
+.tr-legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:11px;color:var(--text-faint);}
+.tr-legend .lg{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;background:var(--bg-surface-2);border:1px solid var(--border);}
+.tr-legend .lg.ok{background:var(--mint);border-color:var(--mint);}
+.tr-legend .lg.wait{background:var(--amber);border-color:var(--amber);}
+/* linha do tempo dos trimestres */
+.tl{position:relative;padding-left:22px;}
+.tl::before{content:'';position:absolute;left:7px;top:8px;bottom:8px;width:2px;background:repeating-linear-gradient(180deg,var(--border) 0 6px,transparent 6px 11px);}
+.tl-item{position:relative;margin-bottom:12px;}
+.tl-item:last-child{margin-bottom:0;}
+.tl-dot{position:absolute;left:-22px;top:14px;width:16px;height:16px;border-radius:50%;background:var(--bg-surface-3);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;}
+.tl-item.current .tl-dot{background:var(--mint);border-color:var(--mint);box-shadow:0 0 0 4px #37E2A033;}
+.tl-item.next .tl-dot{background:var(--peri-dim);border-color:var(--peri);}
+.tl-item.reached .tl-dot{background:var(--amber-dim);border-color:var(--amber);}
+.tl-card{padding:12px;border-radius:14px;background:var(--bg-surface-2);border:1px solid var(--border);}
+.tl-item.current .tl-card{background:linear-gradient(160deg,var(--bg-surface-2),var(--mint-dim));border-color:#37E2A055;}
+.tl-item.next .tl-card{border-style:dashed;border-color:#8C93FF66;}
+.tl-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.tl-badge{padding:3px 9px;border-radius:8px;font-size:10.5px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.tl-badge.now{color:var(--mint);background:var(--mint-dim);border:1px solid #37E2A044;}
+.tl-badge.soon{color:var(--peri);background:var(--peri-dim);border:1px solid #8C93FF44;}
+.tl-badge.win{color:var(--amber);background:var(--amber-dim);border:1px solid #FFB64844;}
+.tl-badge.end{color:var(--text-muted);background:var(--bg-surface-3);border:1px solid var(--border);}
+.tl-pct{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:16px;color:var(--text);}
+.tl-route{display:flex;align-items:center;gap:8px;font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--text-muted);}
+.tl-route b{color:var(--text);}
+.tl-route i{font-style:normal;color:var(--peri);font-size:14px;}
+.tl-dates{font-size:11.5px;color:var(--text-faint);margin-top:4px;}
+.tl-chips{display:flex;gap:8px;margin-top:8px;}
+.tl-chips span{padding:3px 9px;border-radius:999px;font-size:11px;background:var(--bg-surface);border:1px solid var(--border);color:var(--text-muted);}
 .mc-foot{font-size:11.5px;color:var(--text-faint);margin:14px 0 0;line-height:1.4;}
 .field textarea{width:100%;background:var(--bg-surface-2);border:1px solid var(--border);color:var(--text);padding:12px 13px;border-radius:10px;font-size:14.5px;outline:none;font-family:inherit;resize:vertical;}
 .field textarea:focus{border-color:#37E2A088;}
@@ -1597,7 +1638,7 @@ function renderJourney(student){
 
     <div class="section-title">🍬 Prêmios</div>
     <div class="card">
-      <p class="muted" style="font-size:12.5px;margin:0 0 4px;">A cada 3 blocos corrigidos 🟢 você ganha um doce — um bombom ou um Fini!</p>
+      <p class="muted" style="font-size:12.5px;margin:0 0 4px;">Junte 3 blocos corrigidos 🟢 e conquiste um doce especial: bombom ou Fini. Bora juntar!</p>
       ${renderRewardDots(student)}
       <div class="row">
         <span class="badge badge-peri">🍬 ${rw.earned} conquistado${rw.earned===1?'':'s'}</span>
@@ -1609,51 +1650,35 @@ function renderJourney(student){
       }).join('')}</div>` : ''}
     </div>
 
-    <div class="section-title">📚 Meu ritmo</div>
-    <div class="card">
-      <div class="ritmo-cols">
-        <div class="ritmo-col">
-          <div class="ritmo-num">${wd.thisWeek}</div>
-          <div class="ritmo-label">Esta semana</div>
-        </div>
-        <div class="ritmo-col">
-          <div class="ritmo-num">${wd.lastWeek}</div>
-          <div class="ritmo-label">Semana passada</div>
-        </div>
-      </div>
-      <div class="center ritmo-delta" style="color:${deltaColor};">${deltaIcon} ${deltaSign}${wd.delta} folhas</div>
-    </div>
+    ${renderMonthComparisonSimple(student)}
   </div>`;
 }
 
 function renderTrail(student){
-  const blocks = student.blocks;
-  const total = blocks.length;
+  const blocks = student.blocks || [];
+  if(blocks.length===0) return `<p class="muted" style="font-size:12.5px;margin:6px 0;">Os blocos da sua meta vão aparecer aqui.</p>`;
   const done = blocks.filter(b=>b.status!=='not_done').length;
-  const fillPct = total>0 ? clamp((done-1)/Math.max(total-1,1)*100,0,100) : 0;
-  const currentIndex = Math.max(0, done-1);
-
-  const nodes = blocks.map((b,i)=>{
-    let cls='trail-node';
-    if(b.status==='corrected'){ cls+=' done-corrected'; }
-    else if(b.status==='pending_correction'){ cls+=' done-pending'; }
-    if(i===currentIndex && b.status!=='not_done') cls+=' current';
-    return `<div class="${cls}" title="Bloco ${esc(b.label)}"></div>`;
+  const nextIdx = blocks.findIndex(b=>b.status==='not_done');
+  const chips = blocks.map((b,i)=>{
+    let cls='tr-chip', ic='';
+    if(b.status==='corrected'){ cls+=' ok'; ic='✓'; }
+    else if(b.status==='pending_correction'){ cls+=' wait'; ic='…'; }
+    if(i===nextIdx) cls+=' next';
+    return `<div class="${cls}" title="Bloco ${esc(b.label)}${b.forgotten?' · traga a folha':''}">
+      <span class="tr-num">${esc(b.label)}</span>
+      <span class="tr-ic">${b.forgotten?'📌':ic}</span>
+    </div>`;
   }).join('');
-
   return `
-  <div class="trail-wrap">
-    <div class="trail-track" aria-hidden="true">
-      <div class="trail-marker"><div class="cap">📍</div></div>
-      <div style="position:relative;flex-shrink:0;display:flex;align-items:center;">
-        <div class="trail-line" style="left:0;right:0;"><div class="trail-line-fill" style="width:${fillPct}%;"></div></div>
-        ${nodes}
-      </div>
-      <div class="trail-marker"><div class="cap" style="background:var(--mint-dim);border-color:#37E2A066;">🎯</div></div>
-    </div>
+  <div class="tr-head">
+    <span class="muted" style="font-size:12.5px;">${done} de ${blocks.length} blocos feitos</span>
+    ${nextIdx>=0 ? `<span class="tr-nextlbl">Próximo: <b>${esc(blocks[nextIdx].label)}</b></span>` : `<span class="tr-nextlbl">🎉 Todos feitos!</span>`}
   </div>
-  <div class="row" style="padding:0 4px;">
-    <span class="faint" style="font-size:11px;">🟢 feito + corrigido &nbsp; 🟡 aguardando correção &nbsp; ⚪ a fazer</span>
+  <div class="tr-grid">${chips}</div>
+  <div class="tr-legend">
+    <span><i class="lg ok"></i>corrigido</span>
+    <span><i class="lg wait"></i>aguardando correção</span>
+    <span><i class="lg"></i>a fazer</span>
   </div>`;
 }
 
@@ -1901,11 +1926,54 @@ function renderTrimesterSectionAdmin(student){
 }
 
 function renderTrimesterSectionStudent(student){
+  const cur = stats(student);
+  const completed = (student.metaHistory||[]).filter(e=>e.status==='completed')
+    .sort((x,y)=> (y.archivedAtTime||y.archivedAt||'').localeCompare(x.archivedAtTime||x.archivedAt||''));
+  const planned = (student.metaHistory||[]).find(e=>e.status==='planned');
+  const route = (a1,a2,b1,b2)=> `<span class="tl-route">${a1?`${esc(a1)}${esc(a2)}<i>➜</i>`:''}<b>${esc(b1)}${esc(b2)}</b></span>`;
+
+  const items = [];
+  items.push(`
+    <div class="tl-item current">
+      <span class="tl-dot"></span>
+      <div class="tl-card">
+        <div class="tl-top"><span class="tl-badge now">Atual</span><span class="tl-pct">${cur.percent}%</span></div>
+        ${route(student.startStage, student.startSheet, student.targetStage, student.targetSheet)}
+        <div class="tl-dates">${student.startDate ? fmtDate(student.startDate)+' → ' : 'até '}${fmtDate(student.targetEnd)}</div>
+        <div class="progress-track" style="height:8px;margin-top:10px;"><div class="progress-fill" style="width:${cur.percent}%;"></div></div>
+      </div>
+    </div>`);
+
+  if(planned){
+    items.unshift(`
+    <div class="tl-item next">
+      <span class="tl-dot"></span>
+      <div class="tl-card">
+        <div class="tl-top"><span class="tl-badge soon">${modeOfEntry(planned)==='vacation' ? '🌴 Próxima' : 'Próxima'}</span></div>
+        ${route(planned.startStage, planned.startSheet, planned.targetStage, planned.targetSheet)}
+        <div class="tl-dates">${planned.startDate ? fmtDate(planned.startDate)+' → ' : 'até '}${fmtDate(planned.targetEnd)}</div>
+      </div>
+    </div>`);
+  }
+
+  completed.forEach(e=>{
+    const pct = e.balance ? e.balance.percent : (e.blocksTotal>0 ? Math.round((e.blocksCompleted/e.blocksTotal)*100) : 0);
+    const reached = e.reached !== undefined ? e.reached : e.blocksCompleted===e.blocksTotal;
+    items.push(`
+    <div class="tl-item done ${reached?'reached':''}">
+      <span class="tl-dot">${reached?'🎯':''}</span>
+      <div class="tl-card">
+        <div class="tl-top"><span class="tl-badge ${reached?'win':'end'}">${reached?'🎯 Meta batida':'Encerrada'}</span><span class="tl-pct">${pct}%</span></div>
+        ${route(e.startStage, e.startSheet, e.targetStage, e.targetSheet)}
+        <div class="tl-dates">${e.startDate ? fmtDate(e.startDate)+' → ' : 'até '}${fmtDate(e.archivedAt)}</div>
+        ${e.balance ? `<div class="tl-chips"><span>🔥 ${e.balance.days} ${e.balance.days===1?'dia':'dias'}</span><span>📄 ${e.balance.sheets} ${e.balance.sheets===1?'folha':'folhas'}</span></div>` : ''}
+      </div>
+    </div>`);
+  });
+
   return `
     <div class="section-title">📜 Trimestres</div>
-    <div class="card">
-      ${renderMetaHistoryRows(student, false)}
-    </div>`;
+    <div class="card"><div class="tl">${items.join('')}</div></div>`;
 }
 
 function renderWeeklyHistoryStudent(student){
