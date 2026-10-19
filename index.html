@@ -523,6 +523,32 @@ input,select{font-family:inherit;}
 @keyframes mcdrift{from{transform:translateX(-12px);}to{transform:translateX(18px);}}
 @keyframes mcsway{from{transform:rotate(-1.6deg);}to{transform:rotate(1.6deg);}}
 @media (prefers-reduced-motion:reduce){.mc-art *{animation:none !important;}}
+
+.jc{padding:16px;}
+.jc-route{display:flex;align-items:stretch;gap:10px;}
+.jc-point{flex:1;min-width:0;background:var(--bg-surface-2);border:1px solid var(--border);border-radius:14px;padding:12px 8px;text-align:center;}
+.jc-point.goal{background:var(--mint-dim);border-color:#37E2A055;}
+.jc-point.goal .jc-val{color:var(--mint);}
+.jc-lbl{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);font-family:'JetBrains Mono',monospace;}
+.jc-val{display:block;font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;margin-top:4px;color:var(--text);}
+.jc-arrow{align-self:center;color:var(--peri);font-size:20px;flex-shrink:0;}
+.jc-time{margin-top:14px;padding-top:14px;border-top:1px dashed var(--border);}
+.jc-dates{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;}
+.jc-dates > div:first-child b, .jc-dates .jc-end b{display:block;font-size:14px;margin-top:2px;color:var(--text);}
+.jc-end{text-align:right;}
+.jc-count{text-align:center;padding:6px 14px;border-radius:14px;background:var(--amber-dim);border:1px solid #FFB64844;}
+.jc-count b{display:block;font-family:'Space Grotesk',sans-serif;font-size:24px;line-height:1.1;color:var(--amber);}
+.jc-count small{display:block;font-size:10.5px;color:var(--amber);font-weight:600;white-space:nowrap;}
+.jc-bar{height:6px;border-radius:20px;background:var(--bg-surface-2);border:1px solid var(--border);margin-top:12px;overflow:hidden;}
+.jc-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--peri),var(--amber));transition:width .4s ease;}
+
+.jc-prog{margin-top:14px;padding-top:14px;border-top:1px dashed var(--border);}
+.jc-prog-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;}
+.jc-pct{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;color:var(--mint);line-height:1;}
+.jc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
+.jc-stat{text-align:center;padding:8px 4px;border-radius:12px;background:var(--bg-surface-2);border:1px solid var(--border);}
+.jc-stat b{display:block;font-size:14px;color:var(--text);}
+.jc-stat small{display:block;margin-top:2px;font-size:10.5px;color:var(--text-faint);letter-spacing:.04em;}
 .mc-foot{font-size:11.5px;color:var(--text-faint);margin:14px 0 0;line-height:1.4;}
 .field textarea{width:100%;background:var(--bg-surface-2);border:1px solid var(--border);color:var(--text);padding:12px 13px;border-radius:10px;font-size:14.5px;outline:none;font-family:inherit;resize:vertical;}
 .field textarea:focus{border-color:#37E2A088;}
@@ -1414,8 +1440,7 @@ function renderJourney(student){
       if(!m) return '';
       const today = todayISO();
       const startsIn = student.startDate && student.startDate > today ? daysBetween(today, student.startDate) : 0;
-      const left = student.targetEnd ? daysBetween(today, student.targetEnd) : null;
-      const cstatus = startsIn>0 ? `Começa em ${startsIn} ${startsIn===1?'dia':'dias'}` : (left===null ? '' : (left>=0 ? `Faltam ${left} ${left===1?'dia':'dias'}` : 'Prazo finalizado'));
+      const cstatus = startsIn>0 ? `Começa em ${startsIn} ${startsIn===1?'dia':'dias'}` : '';
       return `
       <div class="mission-card current" role="region" aria-label="Missão de férias em andamento">
         ${startsIn===0 ? `<div class="mc-art" aria-hidden="false">
@@ -1517,36 +1542,53 @@ function renderJourney(student){
       </div>`;
     })()}
 
-    <div class="card">
-      <div class="row">
-        <div>
-          <div class="eyebrow">📍 Ponto de partida</div>
-          <div class="display" style="font-size:22px;font-weight:700;">${esc(student.startStage)}${esc(student.startSheet)}</div>
+    ${(() => {
+      const st = student.targetStart || student.startDate || '';
+      const en = student.targetEnd || '';
+      const today = todayISO();
+      const total = (st && en) ? Math.max(daysBetween(st, en), 1) : 0;
+      const elapsed = total ? clamp(daysBetween(st, today), 0, total) : 0;
+      const timePct = total ? Math.round(elapsed/total*100) : 0;
+      const notStarted = !!(st && st > today);
+      const startsIn = notStarted ? daysBetween(today, st) : 0;
+      const rem = Math.max(s.daysRemaining, 0);
+      const big = notStarted ? startsIn : rem;
+      const unit = notStarted ? (startsIn===1 ? 'dia para começar' : 'dias para começar') : (rem===1 ? 'dia restante' : 'dias restantes');
+      return `
+    <div class="card jc">
+      <div class="jc-route">
+        <div class="jc-point">
+          <span class="jc-lbl">📍 Ponto de partida</span>
+          <span class="jc-val">${esc(student.startStage)}${esc(student.startSheet)}</span>
         </div>
-        <div style="text-align:right;">
-          <div class="eyebrow" style="justify-content:flex-end;">🎯 Sua meta</div>
-          <div class="display" style="font-size:22px;font-weight:700;color:var(--mint);">${esc(student.targetStage)}${esc(student.targetSheet)}</div>
+        <span class="jc-arrow" aria-hidden="true">➜</span>
+        <div class="jc-point goal">
+          <span class="jc-lbl">🎯 Sua meta</span>
+          <span class="jc-val">${esc(student.targetStage)}${esc(student.targetSheet)}</span>
         </div>
       </div>
-      <div class="divider"></div>
-      <div class="row">
-        <span class="pill">🗓 ${fmtDate(student.targetStart)} → ${fmtDate(student.targetEnd)}</span>
-        <span class="pill" style="color:var(--peri);border-color:#8C93FF44;">⏰ ${s.daysRemaining>=0?s.daysRemaining:0} dias restantes</span>
+      <div class="jc-time">
+        <div class="jc-dates">
+          <div><span class="jc-lbl">Início</span><b>${st ? fmtDate(st) : '—'}</b></div>
+          <div class="jc-count"><b>${big}</b><small>${unit}</small></div>
+          <div class="jc-end"><span class="jc-lbl">Fim</span><b>${en ? fmtDate(en) : '—'}</b></div>
+        </div>
+        ${total ? `<div class="jc-bar" role="img" aria-label="${timePct}% do prazo já passou"><div class="jc-fill" style="width:${timePct}%;"></div></div>` : ''}
       </div>
-    </div>
-
-    <div class="card">
-      <div class="row" style="margin-bottom:10px;">
-        <span class="eyebrow" style="margin:0;">📈 Progresso da meta</span>
-        <span class="progress-pct">${s.percent}%</span>
+      <div class="jc-prog">
+        <div class="jc-prog-head">
+          <span class="jc-lbl" style="font-size:10.5px;">📈 Progresso da meta</span>
+          <span class="jc-pct">${s.percent}%</span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" style="width:${s.percent}%;"></div></div>
+        <div class="jc-stats">
+          <div class="jc-stat"><b>🟢 ${s.done}/${s.total}</b><small>blocos</small></div>
+          <div class="jc-stat"><b>📄 ~${s.sheetsCompleted}</b><small>folhas</small></div>
+          <div class="jc-stat"><b>🟡 ${s.pending}</b><small>${s.pending===1?'pendente':'pendentes'}</small></div>
+        </div>
       </div>
-      <div class="progress-track"><div class="progress-fill" style="width:${s.percent}%;"></div></div>
-      <div class="row" style="margin-top:12px;">
-        <span class="muted" style="font-size:12.5px;">🟢 ${s.done}/${s.total} blocos</span>
-        <span class="muted" style="font-size:12.5px;">📄 ~${s.sheetsCompleted} folhas</span>
-        <span class="muted" style="font-size:12.5px;">🟡 ${s.pending} pendente${s.pending===1?'':'s'}</span>
-      </div>
-    </div>
+    </div>`;
+    })()}
 
     <div class="section-title">Trilha de evolução</div>
     <div class="card" style="padding-top:8px;">
