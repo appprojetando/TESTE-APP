@@ -555,9 +555,8 @@ input,select{font-family:inherit;}
 .tr-nextlbl{font-size:12px;color:var(--peri);font-family:'JetBrains Mono',monospace;}
 .tr-nextlbl b{color:var(--text);}
 .tr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:6px;}
-.tr-chip{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:6px 2px;border-radius:9px;background:var(--bg-surface-2);border:1px solid var(--border);color:var(--text-faint);font-family:'JetBrains Mono',monospace;min-height:40px;}
+.tr-chip{display:flex;align-items:center;justify-content:center;text-align:center;padding:6px 2px;border-radius:9px;background:var(--bg-surface-2);border:1px solid var(--border);color:var(--text-faint);font-family:'JetBrains Mono',monospace;min-height:40px;}
 .tr-num{font-size:11px;font-weight:700;line-height:1.1;}
-.tr-ic{font-size:10px;line-height:1;min-height:10px;}
 .tr-chip.ok{background:var(--mint-dim);border-color:#37E2A066;color:var(--mint);}
 .tr-chip.wait{background:var(--amber-dim);border-color:#FFB64866;color:var(--amber);}
 .tr-chip.next{border-color:var(--peri);box-shadow:0 0 0 2px #8C93FF40;color:var(--text);}
@@ -1638,7 +1637,7 @@ function renderJourney(student){
 
     <div class="section-title">🍬 Prêmios</div>
     <div class="card">
-      <p class="muted" style="font-size:12.5px;margin:0 0 4px;">Junte 3 blocos corrigidos 🟢 e conquiste um doce especial: bombom ou Fini. Bora juntar!</p>
+      <p class="muted" style="font-size:12.5px;margin:0 0 4px;">3 blocos corrigidos, você ganha um doce.</p>
       ${renderRewardDots(student)}
       <div class="row">
         <span class="badge badge-peri">🍬 ${rw.earned} conquistado${rw.earned===1?'':'s'}</span>
@@ -1650,7 +1649,10 @@ function renderJourney(student){
       }).join('')}</div>` : ''}
     </div>
 
-    ${renderMonthComparisonSimple(student)}
+    <div class="section-title">📅 Histórico mensal</div>
+    <div class="card">
+      ${renderCalendar(student, true)}
+    </div>
   </div>`;
 }
 
@@ -1660,14 +1662,11 @@ function renderTrail(student){
   const done = blocks.filter(b=>b.status!=='not_done').length;
   const nextIdx = blocks.findIndex(b=>b.status==='not_done');
   const chips = blocks.map((b,i)=>{
-    let cls='tr-chip', ic='';
-    if(b.status==='corrected'){ cls+=' ok'; ic='✓'; }
-    else if(b.status==='pending_correction'){ cls+=' wait'; ic='…'; }
+    let cls='tr-chip';
+    if(b.status==='corrected'){ cls+=' ok'; }
+    else if(b.status==='pending_correction'){ cls+=' wait'; }
     if(i===nextIdx) cls+=' next';
-    return `<div class="${cls}" title="Bloco ${esc(b.label)}${b.forgotten?' · traga a folha':''}">
-      <span class="tr-num">${esc(b.label)}</span>
-      <span class="tr-ic">${b.forgotten?'📌':ic}</span>
-    </div>`;
+    return `<div class="${cls}" title="Bloco ${esc(b.label)}"><span class="tr-num">${esc(b.label)}</span></div>`;
   }).join('');
   return `
   <div class="tr-head">
@@ -2036,11 +2035,6 @@ function renderStudentProfile(student){
       <div class="stat-card"><div class="stat-num">${s.sheetsCompleted}</div><div class="stat-label">Folhas realizadas</div></div>
       <div class="stat-card"><div class="stat-num">${s.pending}</div><div class="stat-label">Correções pendentes</div></div>
       <div class="stat-card"><div class="stat-num">${streak.total}</div><div class="stat-label">Dias de constância</div></div>
-    </div>
-
-    <div class="section-title">📅 Histórico mensal</div>
-    <div class="card">
-      ${renderCalendar(student, true)}
     </div>
 
     ${renderWeeklyHistoryStudent(student)}
