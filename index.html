@@ -175,6 +175,12 @@ input,select{font-family:inherit;}
   border:1px solid var(--border);color:var(--text);outline:none;margin-bottom:12px;
 }
 .code-input:focus{border-color:#37E2A088;}
+.maint-card{width:100%;max-width:340px;margin-top:6px;padding:26px 22px;text-align:center;border-radius:20px;background:linear-gradient(160deg,var(--bg-surface) 0%,var(--bg-surface-2) 100%);border:1px solid #FFB64855;}
+.maint-ic{font-size:40px;line-height:1;display:inline-block;animation:maintwiggle 2.6s ease-in-out infinite;}
+.maint-title{margin:12px 0 6px;font-size:20px;color:var(--amber);}
+.maint-text{margin:0;font-size:13.5px;line-height:1.55;color:var(--text-muted);}
+@keyframes maintwiggle{0%,100%{transform:rotate(-8deg);}50%{transform:rotate(8deg);}}
+@media (prefers-reduced-motion:reduce){.maint-ic{animation:none;}}
 .landing-link{margin-top:26px;font-size:13px;color:var(--text-faint);text-decoration:underline;background:none;border:none;}
 .error-msg{color:var(--danger);font-size:13px;margin-top:8px;min-height:16px;}
 
@@ -526,7 +532,7 @@ input,select{font-family:inherit;}
 
 .jc{padding:16px;}
 .jc-route{display:flex;align-items:stretch;gap:10px;}
-.jc-point{flex:1;min-width:0;background:var(--bg-surface-2);border:1px solid var(--border);border-radius:14px;padding:12px 8px;text-align:center;}
+.jc-point{flex:1;min-width:0;background:var(--bg-surface-2);border:1px solid var(--border);border-radius:14px;padding:12px 8px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 .jc-point.goal{background:var(--mint-dim);border-color:#37E2A055;}
 .jc-point.goal .jc-val{color:var(--mint);}
 .jc-lbl{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);font-family:'JetBrains Mono',monospace;}
@@ -635,6 +641,8 @@ input,select{font-family:inherit;}
 }
 .theme-toggle:active{transform:scale(.96);}
 
+
+
 /* ---------- Modo claro/escuro ---------- */
 body.theme-light{
   --bg-deep:#F5F7FB;
@@ -710,6 +718,7 @@ let PLAN_EDIT_ID = null;       // id da meta planejada que está sendo editada
 // Draft helpers (emoji fixo)
 const draftFromTheme = (t) => (t ? { emoji: t.emoji || MISSION_THEME_DEFAULT.emoji, name: t.name || '', message: t.message || '' } : { emoji: MISSION_THEME_DEFAULT.emoji, name: MISSION_THEME_DEFAULT.name, message: MISSION_THEME_DEFAULT.msg });
 
+let BULK_END_CONFIRM = null;  // data aguardando confirmação (fim da meta de todos)
 let PLAN_MODE_DRAFT = null;   // 'vacation' | 'normal' ao planejar a próxima meta
 let EDIT_MODE_DRAFT = null;   // 'vacation' | 'normal' ao editar o aluno
 const modeOfEntry = (e) => (e && e.mode) ? (e.mode==='normal' ? 'normal' : 'vacation') : (e && e.theme ? 'vacation' : 'normal');
@@ -764,6 +773,11 @@ let STUDENT_VIEW = 'journey';
 let SELECTED_STUDENT_ID = null;
 let SEARCH_TERM = '';
 let LOGIN_ERROR = '';
+/* ===== MODO MANUTENÇÃO =====
+   true  = alunos veem o aviso de manutenção (o orientador continua entrando normalmente)
+   false = site normal para todos */
+const MAINTENANCE_MODE = false;
+const MAINTENANCE_TEXT = 'Estamos atualizando o site e cadastrando novas informações dos alunos. Volte em breve!';
 let ADMIN_LOGIN_STAGE = false;
 let TOAST = null;
 let CALENDAR_MONTH = null;
@@ -1360,6 +1374,7 @@ function render(){
   if(!DATA){ app.innerHTML = renderLoading(); return; }
   cleanupExpiredForgottenReminders();
 
+  if(MAINTENANCE_MODE && SESSION.role === 'student'){ SESSION = {role:null, studentId:null}; }
   let html = '';
   if(SESSION.role === 'student'){
     html = renderStudentApp();
@@ -1383,12 +1398,18 @@ function renderLanding(){
     <div style="position:absolute;top:18px;right:18px;">${renderThemeToggle()}</div>
     <div class="logo-mark">🚀</div>
     <div class="wordmark">MINHA <span>META</span></div>
+    ${MAINTENANCE_MODE ? `
+    <div class="maint-card" role="status">
+      <div class="maint-ic">🛠️</div>
+      <h2 class="maint-title">Site em manutenção</h2>
+      <p class="maint-text">${esc(MAINTENANCE_TEXT)}</p>
+    </div>` : `
     <p class="tagline">De onde eu comecei → onde estou → onde quero chegar.</p>
     <div class="code-box">
       <input id="student-code-input" class="code-input" inputmode="numeric" maxlength="6" placeholder="• • • •" autocomplete="off" aria-label="Código do aluno">
       <button class="btn btn-primary btn-block" id="btn-enter-code">Entrar</button>
       <div class="error-msg" id="login-error">${esc(LOGIN_ERROR)}</div>
-    </div>
+    </div>`}
     <button class="landing-link" id="btn-go-admin">Sou orientador</button>
   </div>`;
 }
@@ -1432,7 +1453,10 @@ function renderStudentApp(){
           <div class="faint" style="font-size:12px;">Estágio ${esc(student.targetStage)}</div>
         </div>
       </div>
-      ${renderThemeToggle()}
+      <div class="row" style="gap:6px;">
+        ${renderThemeToggle()}
+        <button class="icon-btn" id="btn-logout" aria-label="Sair" title="Sair">⎋</button>
+      </div>
     </div>
     ${body}
     ${renderStudentNav()}
@@ -1562,7 +1586,6 @@ function renderJourney(student){
         <div class="m-msg">${esc(mMsg)}</div>
         ${route}
         ${dates}
-        <p class="mc-foot">Quem inicia oficialmente a nova meta é o orientador.</p>
       </div>`;
     })()}
 
@@ -1613,7 +1636,6 @@ function renderJourney(student){
           <div class="jc-count"><b>${big}</b><small>${unit}</small></div>
           <div class="jc-end"><span class="jc-lbl">Fim</span><b>${en ? fmtDate(en) : '—'}</b></div>
         </div>
-        ${total ? `<div class="jc-bar" role="img" aria-label="${timePct}% do prazo já passou"><div class="jc-fill" style="width:${timePct}%;"></div></div>` : ''}
       </div>
       <div class="jc-prog">
         <div class="jc-prog-head">
@@ -1622,7 +1644,7 @@ function renderJourney(student){
         </div>
         <div class="progress-track"><div class="progress-fill" style="width:${s.percent}%;"></div></div>
         <div class="jc-stats">
-          <div class="jc-stat"><b>🟢 ${s.done}/${s.total}</b><small>blocos</small></div>
+          <div class="jc-stat"><b>${s.done}/${s.total}</b><small>blocos</small></div>
           <div class="jc-stat"><b>📄 ~${s.sheetsCompleted}</b><small>folhas</small></div>
           <div class="jc-stat"><b>🟡 ${s.pending}</b><small>${s.pending===1?'pendente':'pendentes'}</small></div>
         </div>
@@ -2050,8 +2072,6 @@ function renderStudentProfile(student){
         </div>`).join('')}
     </div>
 
-
-    <button class="btn btn-ghost btn-block" style="margin-top:22px;" id="btn-logout">Sair</button>
   </div>`;
 }
 
@@ -2096,6 +2116,23 @@ function renderAdminProfile(){
         <div class="avatar-circle" style="width:64px;height:64px;font-size:30px;margin:0 auto 10px;">🧑‍🏫</div>
         <div class="display" style="font-size:19px;font-weight:700;">Perfil do Orientador</div>
         <div class="faint" style="font-size:12px;margin-top:5px;">${esc(email)}</div>
+      </div>
+
+      <div class="section-title">📅 Fim da meta de todos os alunos</div>
+      <div class="card">
+        <p class="faint" style="font-size:11.5px;margin:0 0 12px;">Define a mesma data final da meta atual para todos os ${DATA.students.length} alunos cadastrados. O material didático e o progresso não são alterados.</p>
+        <div class="field">
+          <label>Nova data de fim</label>
+          <input type="date" id="f-bulk-end" value="${esc(BULK_END_CONFIRM || '')}">
+        </div>
+        <div class="error-msg" id="bulk-end-error"></div>
+        ${BULK_END_CONFIRM ? `
+          <p style="font-size:13px;margin:10px 0;">Alterar o fim da meta de <b>${DATA.students.length} ${DATA.students.length===1?'aluno':'alunos'}</b> para <b>${fmtDate(BULK_END_CONFIRM)}</b>?</p>
+          <div class="field-row">
+            <button class="btn btn-ghost btn-block btn-sm" id="btn-bulk-cancel">Cancelar</button>
+            <button class="btn btn-primary btn-block btn-sm" id="btn-bulk-confirm">Confirmar</button>
+          </div>` : `
+          <button class="btn btn-primary btn-block btn-sm" id="btn-bulk-end" ${DATA.students.length===0?'disabled':''}>Aplicar a todos os alunos</button>`}
       </div>
 
       <button class="btn btn-ghost btn-block" id="btn-admin-profile-back">← Voltar ao painel</button>
@@ -2400,7 +2437,6 @@ function renderAdminTrimesterBalance(){
       <div class="hall-row" data-open-student="${r.st.id}" style="cursor:pointer;">
         <span class="hall-avatar">${r.st.avatar}</span>
         <span class="hall-name">${esc(r.st.name)}</span>
-        ${r.archived ? `<span class="faint" style="font-size:11px;margin-left:auto;">encerrada em ${fmtDate(r.archivedAt)}</span>` : ''}
       </div>`).join('')}
     </div>`}
 
@@ -2946,6 +2982,14 @@ function attachHandlers(){
     HALL_MONTH = shiftMonth(HALL_MONTH || todayISO().slice(0,7), Number(btn.getAttribute('data-hall-month')));
     render();
   });
+  if($('#btn-bulk-end')) $('#btn-bulk-end').onclick = ()=>{
+    const v = (document.getElementById('f-bulk-end')||{}).value || '';
+    const er = document.getElementById('bulk-end-error');
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(v)){ if(er) er.textContent = 'Escolha a nova data de fim.'; return; }
+    BULK_END_CONFIRM = v; render();
+  };
+  if($('#btn-bulk-cancel')) $('#btn-bulk-cancel').onclick = ()=>{ BULK_END_CONFIRM = null; render(); };
+  if($('#btn-bulk-confirm')) $('#btn-bulk-confirm').onclick = ()=> applyBulkTargetEnd(BULK_END_CONFIRM);
   if($('#btn-balance-back')) $('#btn-balance-back').onclick = ()=>{ ADMIN_VIEW='overview'; render(); };
   if($('#btn-balance-print')) $('#btn-balance-print').onclick = ()=>{ window.print(); };
   $$('[data-hall-tab]').forEach(tab=> tab.onclick = ()=>{
@@ -3500,13 +3544,10 @@ async function saveStudentEdit(){
   student.code = code;
   student.avatar = avatar;
 
-  if(startChanged){
-    const { total, blocks } = buildBlocks(startStage, startSheet, targetStage, targetSheet);
-    student.blocks = blocks;
-    student.totalBlocks = total;
-  } else {
-    updateStudentTarget(student, targetStage, targetSheet, targetDate);
-  }
+  // O material didático (blocos, números e status) NÃO é alterado ao mudar a meta.
+  student.targetStage = targetStage;
+  student.targetSheet = targetSheet;
+  student.targetEnd = targetDate;
   student.startStage = startStage;
   student.startSheet = startSheet;
   student.startDate = startDate;
@@ -3522,7 +3563,7 @@ async function saveStudentEdit(){
   touch(student);
   await saveData();
   EDIT_STUDENT_MODE = false;
-  showToast(startChanged ? 'Aluno atualizado! (progresso dos blocos recalculado)' : 'Aluno atualizado!');
+  showToast('Aluno atualizado! O material didático foi mantido.');
 }
 async function savePlannedMeta(){
   const student = DATA.students.find(s=>s.id===SELECTED_STUDENT_ID);
@@ -3640,6 +3681,19 @@ async function deleteStudent(){
   await saveData();
   DELETE_CONFIRM_ID = null;
   ADMIN_VIEW='students'; render();
+}
+async function applyBulkTargetEnd(date){
+  if(!date) return;
+  let changed = 0; const skipped = [];
+  DATA.students.forEach(st=>{
+    if(st.startDate && date < st.startDate){ skipped.push(st.name); return; }
+    st.targetEnd = date; touch(st); changed++;
+  });
+  BULK_END_CONFIRM = null;
+  await saveData();
+  showToast(skipped.length
+    ? `Fim da meta alterado para ${changed} alunos. Não alterado (data antes do início): ${skipped.join(', ')}.`
+    : `Fim da meta alterado para ${changed} ${changed===1?'aluno':'alunos'}!`);
 }
 async function saveTrimesterDefaults(){
   const start = document.getElementById('f-trimester-start').value;
