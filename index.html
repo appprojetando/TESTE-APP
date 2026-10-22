@@ -147,6 +147,10 @@ input,select{font-family:inherit;}
 .muted{color:var(--text-muted);}
 .faint{color:var(--text-faint);}
 .center{text-align:center;}
+.quick-nav{display:flex;gap:6px;overflow-x:auto;position:sticky;top:0;z-index:6;background:var(--bg-deep);padding:8px 0 10px;margin:0 0 4px;scrollbar-width:none;}
+.quick-nav::-webkit-scrollbar{display:none;}
+[id^="sec-"]{scroll-margin-top:56px;}
+.quick-nav .qn-chip{flex-shrink:0;border:1px solid var(--border);background:var(--bg-surface-2);color:var(--text-muted);border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:600;cursor:pointer;}
 .section-title{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);margin:22px 0 10px;font-weight:600;}
 .divider{height:1px;background:var(--border);margin:14px 0;}
 .badge-green{color:var(--mint);background:var(--mint-dim);border:1px solid #37E2A044;}
@@ -1061,7 +1065,10 @@ function hallRankMark(rank){
 }
 function streakStats(student){
   const attendance = student.attendance || {};
-  return { total: Object.keys(attendance).length };
+  // Após encerrar o trimestre, a contagem recomeça na data de início da nova meta
+  // (os dias continuam salvos no calendário e no histórico).
+  const from = student.constancyStart || '';
+  return { total: Object.keys(attendance).filter(d=> !from || d >= from).length };
 }
 function isRecentlyActive(student){
   const dates = Object.keys(student.attendance || {});
@@ -2805,6 +2812,12 @@ function renderAdminDetail(){
   const wd = weeklyDelta(student);
   const streak = streakStats(student);
   const rw = rewardStats(student);
+  let periodFrom = daysAgoISO(6);
+  const lastEnd = (student.weeklyHistory||[]).map(h=>h.endDate).filter(Boolean).sort().pop();
+  if(lastEnd && lastEnd < todayISO()){
+    const d = new Date(lastEnd+'T00:00:00'); d.setDate(d.getDate()+1);
+    periodFrom = d.toISOString().slice(0,10);
+  }
 
   return `
   <div class="screen">
@@ -2841,6 +2854,14 @@ function renderAdminDetail(){
       `}
     </div>
 
+    <div class="quick-nav no-print" role="navigation" aria-label="Atalhos do aluno">
+      <button class="qn-chip" data-jump="sec-material">📚 Material</button>
+      <button class="qn-chip" data-jump="sec-periodo">📝 Período</button>
+      <button class="qn-chip" data-jump="sec-premios">🍬 Prêmios</button>
+      <button class="qn-chip" data-jump="sec-calendario">🗓️ Calendário</button>
+      <button class="qn-chip" data-jump="sec-historico">📜 Histórico</button>
+    </div>
+
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-num">${s.percent}%</div><div class="stat-label">Progresso</div></div>
       <div class="stat-card"><div class="stat-num">${s.done}/${s.total}</div><div class="stat-label">Blocos feitos</div></div>
@@ -2848,16 +2869,16 @@ function renderAdminDetail(){
       <div class="stat-card"><div class="stat-num" style="color:var(--peri);">🔥 ${streak.total}</div><div class="stat-label">Dias de constância</div></div>
     </div>
 
-    <div class="section-title">Material didático</div>
+    <div class="section-title" id="sec-material">Material didático</div>
     <div class="card">
       ${renderBlocksSection(student)}
     </div>
 
-    <div class="section-title">Registrar período</div>
+    <div class="section-title" id="sec-periodo">Registrar período</div>
     <div class="card">
-      <p class="faint" style="font-size:11.5px;margin:0 0 12px;">Escolha o período que quiser — não precisa ser de segunda a domingo, nem a semana atual.</p>
+      <p class="faint" style="font-size:11.5px;margin:0 0 12px;">O período já começa no dia seguinte ao último registro. Pode mudar as datas se quiser — não precisa ser de segunda a domingo.</p>
       <div class="field-row">
-        <div class="field"><label>De</label><input type="date" id="input-week-start" value="${daysAgoISO(6)}"></div>
+        <div class="field"><label>De</label><input type="date" id="input-week-start" value="${periodFrom}"></div>
         <div class="field"><label>Até</label><input type="date" id="input-week-end" value="${todayISO()}"></div>
       </div>
       <div class="field">
@@ -2872,7 +2893,7 @@ function renderAdminDetail(){
       <button class="btn btn-primary btn-block" id="btn-register-week">Registrar período</button>
     </div>
 
-    <div class="section-title">🍬 Prêmios (bombom ou Fini)</div>
+    <div class="section-title" id="sec-premios">🍬 Prêmios (bombom ou Fini)</div>
     <div class="card">
       <p class="muted" style="font-size:12.5px;margin:0 0 4px;">A cada 3 blocos corrigidos, o aluno ganha 1 doce — um bombom ou um Fini, não os dois. Toque no doce que ele escolheu; toque de novo para desfazer.</p>
       ${renderRewardDots(student)}
@@ -2892,10 +2913,11 @@ function renderAdminDetail(){
       </div>`}
     </div>
 
-    <div class="section-title">🗓️ Calendário</div>
+    <div class="section-title" id="sec-calendario">🗓️ Calendário</div>
     <div class="card">
       <div class="row" style="margin-bottom:14px;">
         <span class="pill" style="color:var(--amber);border-color:#FFB64844;">🔥 ${streak.total} dias acumulados</span>
+        ${(student.attendance||{})[todayISO()] ? '' : `<button class="btn btn-primary btn-sm" id="btn-mark-today">✅ Marcar hoje</button>`}
       </div>
       ${renderCalendar(student)}
     </div>
@@ -2904,7 +2926,7 @@ function renderAdminDetail(){
 
     ${renderTrimesterSectionAdmin(student)}
 
-    <div class="section-title">Histórico</div>
+    <div class="section-title" id="sec-historico">Histórico</div>
     <div class="card">
       ${student.weeklyHistory.length===0 ? `<span class="muted" style="font-size:13px;">Nenhum registro ainda.</span>` :
         student.weeklyHistory.slice().sort((a,b)=> (b.endDate||'').localeCompare(a.endDate||'')).map(h=>{
@@ -3112,6 +3134,11 @@ function attachHandlers(){
 
   // Admin detail: calendário de constância
   $$('[data-cal-day]').forEach(cell=> cell.onclick = ()=> toggleStudyDay(cell.getAttribute('data-cal-day')));
+  if($('#btn-mark-today')) $('#btn-mark-today').onclick = ()=> toggleStudyDay(todayISO());
+  $$('[data-jump]').forEach(btn=> btn.onclick = ()=>{
+    const el = document.getElementById(btn.getAttribute('data-jump'));
+    if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+  });
   if($('#btn-cal-prev')) $('#btn-cal-prev').onclick = ()=>{ shiftCalendarMonth(-1); render(); };
   if($('#btn-cal-next')) $('#btn-cal-next').onclick = ()=>{ shiftCalendarMonth(1); render(); };
 
@@ -3633,6 +3660,9 @@ async function endTrimester(){
   student.startSheet = newStartSheet;
   student.startDate = newStartDate;
   student.targetStart = newStartDate;
+  // Reinicia as contagens do novo período: constância e prêmios (folhas e correções recomeçam com os novos blocos).
+  student.constancyStart = newStartDate;
+  student.rewards = {};
 
   if(planned){
     const { total, blocks } = buildBlocks(newStartStage, newStartSheet, planned.targetStage, planned.targetSheet);
