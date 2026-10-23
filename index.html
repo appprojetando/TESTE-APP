@@ -14,6 +14,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-analytics-compat.js"></script>
 <script>
   // Sua firebaseConfig (inserida conforme você enviou)
   const firebaseConfig = {
@@ -31,12 +32,36 @@
     firebase.initializeApp(firebaseConfig);
     var db = firebase.firestore();
     var auth = firebase.auth();
+    var analytics = null;
+    try {
+      if (firebase.analytics && firebaseConfig.measurementId) {
+        analytics = firebase.analytics();
+        console.info('Firebase Analytics inicializado com sucesso.');
+      }
+    } catch (analyticsError) {
+      console.warn('Firebase Analytics não pôde ser inicializado:', analyticsError);
+    }
     try { auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); } catch (e) { console.warn('Não foi possível configurar persistência da autenticação:', e); }
     console.info('Firebase inicializado com sucesso.');
   } catch (e) {
     console.warn('Falha ao inicializar Firebase (continua com localStorage):', e);
     var db = null;
     var auth = null;
+    var analytics = null;
+  }
+
+  // Envia ao Analytics apenas eventos de login concluído; não envia nome, e-mail ou código do aluno.
+  function registrarEventoAcesso(perfil, metodo) {
+    try {
+      if (analytics) {
+        analytics.logEvent('login', {
+          perfil_acesso: perfil,
+          method: metodo
+        });
+      }
+    } catch (e) {
+      console.warn('Não foi possível enviar evento ao Analytics:', e);
+    }
   }
 </script>
 <!-- === fim Firebase === -->
@@ -500,9 +525,9 @@ input,select{font-family:inherit;}
   display:flex;align-items:center;justify-content:center;
 }
 .cal-cell.empty{background:transparent;border:none;}
-.cal-cell.marked-kumon{background:#DDF5E8;border-color:#A9D9BB;color:#214B34;font-weight:700;}
-.cal-cell.marked-presencial{background:#DDF1FA;border-color:#A8D4E8;color:#21485A;font-weight:700;}
-.cal-cell.marked-teste{background:#EAE8FF;border-color:#C4BEF2;color:#3B356A;font-weight:700;}
+.cal-cell.marked-kumon{background:var(--mint);border-color:var(--mint);color:#06301F;font-weight:700;}
+.cal-cell.marked-presencial{background:var(--sky);border-color:var(--sky);color:#062A40;font-weight:700;}
+.cal-cell.marked-teste{background:var(--peri);border-color:var(--peri);color:#1A1550;font-weight:700;}
 .cal-cell.today{box-shadow:0 0 0 2px var(--peri) inset;}
 .cal-legend{display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;}
 .cal-legend span{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);}
@@ -887,7 +912,7 @@ let LOGIN_ERROR = '';
 /* ===== MODO MANUTENÇÃO =====
    true  = alunos veem o aviso de manutenção (o orientador continua entrando normalmente)
    false = site normal para todos */
-const MAINTENANCE_MODE = false;
+const MAINTENANCE_MODE = true;
 const MAINTENANCE_TEXT = 'Estamos atualizando o site e cadastrando novas informações dos alunos. Volte em breve!';
 let ADMIN_LOGIN_STAGE = false;
 let TOAST = null;
@@ -3013,9 +3038,9 @@ function renderCalendar(student, readOnly){
     <div class="cal-weekdays">${weekdayLabels.map(w=>`<span>${w}</span>`).join('')}</div>
     <div class="cal-grid">${cells}</div>
     <div class="cal-legend">
-      <span><span class="cal-dot" style="background:#DDF5E8;"></span>fez o Kumon</span>
-      <span><span class="cal-dot" style="background:#DDF1FA;"></span>veio para a unidade</span>
-      <span><span class="cal-dot" style="background:#EAE8FF;"></span>dia de teste</span>
+      <span><span class="cal-dot" style="background:var(--mint);"></span>fez o Kumon</span>
+      <span><span class="cal-dot" style="background:var(--sky);"></span>veio para a unidade</span>
+      <span><span class="cal-dot" style="background:var(--peri);"></span>dia de teste</span>
     </div>
     ${readOnly ? '' : `<p class="faint" style="font-size:11px;margin-top:8px;">Toque em um dia para alternar: sem marcação → fez o Kumon → veio para a unidade → dia de teste.</p>`}
   `;
@@ -3646,18 +3671,8 @@ function handleStudentLogin(){
   const student=DATA.students.find(s=>s.code===code);
   if(!student){ LOGIN_ERROR='Código não encontrado. Confira com seu orientador.'; render(); return;
   }
-  // Registrar o acesso do aluno no Firebase
-  if (db && firebase.firestore.FieldValue) {
-    db.collection('access_logs').add({
-      perfil: 'aluno',
-      studentId: student.id,
-      studentName: student.name || '',
-      accessedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }).catch(err => {
-      console.warn('Não foi possível registrar o acesso do aluno:', err);
-    });
-  }
   LOGIN_ERROR=''; SESSION={role:'student',studentId:student.id}; STUDENT_VIEW='journey'; render();
+  registrarEventoAcesso('aluno', 'codigo');
   loadPlanResponsesForStudent(student).then(changed=>{ if(changed && SESSION && SESSION.studentId===student.id) render(); });
 }
 async function handleAdminLogin(){
@@ -3692,19 +3707,7 @@ async function handleAdminLogin(){
   try{
     try{ await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); }catch(e){}
     await auth.signInWithEmailAndPassword(email,pass);
-    // Registrar o acesso do orientador no Firebase
-    try {
-      if (db && firebase.firestore.FieldValue) {
-        await db.collection('access_logs').add({
-          perfil: 'orientador',
-          email: auth.currentUser ? auth.currentUser.email : email,
-          uid: auth.currentUser ? auth.currentUser.uid : null,
-          accessedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      }
-    } catch (err) {
-      console.warn('Não foi possível registrar o acesso do orientador:', err);
-    }
+    registrarEventoAcesso('orientador', 'email_senha');
     ADMIN_LOGIN_ATTEMPTS=0;
     ADMIN_LOGIN_LOCK_UNTIL=0;
     LOGIN_ERROR='';
