@@ -887,7 +887,7 @@ let LOGIN_ERROR = '';
 /* ===== MODO MANUTENÇÃO =====
    true  = alunos veem o aviso de manutenção (o orientador continua entrando normalmente)
    false = site normal para todos */
-const MAINTENANCE_MODE = true;
+const MAINTENANCE_MODE = false;
 const MAINTENANCE_TEXT = 'Estamos atualizando o site e cadastrando novas informações dos alunos. Volte em breve!';
 let ADMIN_LOGIN_STAGE = false;
 let TOAST = null;
@@ -3645,6 +3645,17 @@ function handleStudentLogin(){
   }
   const student=DATA.students.find(s=>s.code===code);
   if(!student){ LOGIN_ERROR='Código não encontrado. Confira com seu orientador.'; render(); return;
+  }
+  // Registrar o acesso do aluno no Firebase
+  if (db && firebase.firestore.FieldValue) {
+    db.collection('access_logs').add({
+      perfil: 'aluno',
+      studentId: student.id,
+      studentName: student.name || '',
+      accessedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(err => {
+      console.warn('Não foi possível registrar o acesso do aluno:', err);
+    });
   }
   LOGIN_ERROR=''; SESSION={role:'student',studentId:student.id}; STUDENT_VIEW='journey'; render();
   loadPlanResponsesForStudent(student).then(changed=>{ if(changed && SESSION && SESSION.studentId===student.id) render(); });
